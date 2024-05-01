@@ -1,6 +1,7 @@
 package de.zuellich.offlinewiktionary.core;
 
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
+import java.io.File;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -9,11 +10,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class WiktionaryApp extends Application {
 
-  private final WiktionaryModel model = new WiktionaryModel(this);
+  private final WiktionaryModel model = new WiktionaryModel();
 
   private String searchHandler(String query) {
     System.out.println("You searched for: " + query);
@@ -21,12 +23,26 @@ public class WiktionaryApp extends Application {
     return model.lookupDefinition(query).orElse("Nothing found.");
   }
 
-  private Parent createContent() {
-    final Label status = new Label("Hello World");
-    final Button anImport = new Button("Import");
+  private Parent createContent(Stage primaryStage) {
+    final FileChooser archiveChooser = new FileChooser();
+    archiveChooser.setTitle("Select an index to open...");
+    archiveChooser
+        .getExtensionFilters()
+        .add(
+            new FileChooser.ExtensionFilter(
+                "Wikimedia index", "*pages-articles-multistream-index.txt.bz2"));
+    final Label status = new Label("No index opened");
+    final Button anImport = new Button("Open index");
 
     anImport.setOnAction(
         actionEvent -> {
+          final File selected = archiveChooser.showOpenDialog(primaryStage);
+          if (selected == null) {
+            return;
+          }
+
+          model.setIndexFile(selected.toPath());
+
           var task = new ImportTask(model);
 
           status.textProperty().bind(task.messageProperty());
@@ -35,7 +51,7 @@ public class WiktionaryApp extends Application {
           new Thread(task).start();
         });
 
-    Text definition = new Text("Hello");
+    Text definition = new Text("");
     definition.setWrappingWidth(200);
 
     TextField search = new TextField();
@@ -57,9 +73,9 @@ public class WiktionaryApp extends Application {
   }
 
   @Override
-  public void start(Stage primaryStage) throws Exception {
-    primaryStage.setTitle("HEllo");
-    primaryStage.setScene(new Scene(createContent(), 300, 300));
+  public void start(Stage primaryStage) {
+    primaryStage.setTitle("Offline Wiktionary");
+    primaryStage.setScene(new Scene(createContent(primaryStage), 300, 300));
     primaryStage.show();
   }
 

@@ -20,12 +20,14 @@ public class ImportTask extends Task<Void> {
 
   @Override
   protected Void call() throws Exception {
-    updateMessage("Parsing...");
+    final Path targetIndex = model.indexProperty().get();
+    if (targetIndex == null) {
+      throw new IllegalArgumentException("No target index set on model!");
+    }
 
-    final InputStream in =
-        Files.newInputStream(
-            Path.of(
-                "/home/fzuellich/Downloads/dewiktionary-20240401-pages-articles-multistream-index.txt.bz2"));
+    updateMessage(String.format("Parsing '%s' ...", targetIndex));
+
+    final InputStream in = Files.newInputStream(targetIndex);
     final TreeSet<SeekEntry> definitions = new PageIndexParser().parse(in);
     model.setDefinitions(definitions);
     updateMessage("Done!");

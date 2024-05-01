@@ -15,14 +15,15 @@ import org.xml.sax.SAXException;
 
 public class WiktionaryReader {
 
-  public WiktionaryReader() {}
+  private final Path wiktionaryArchive;
+
+  public WiktionaryReader(Path wiktionaryArchive) {
+    this.wiktionaryArchive = wiktionaryArchive;
+  }
 
   public String retrieve(long byteOffset) {
     WikiPageSAXParser mine = new WikiPageSAXParser();
-    try (final InputStream in =
-            Files.newInputStream(
-                Path.of(
-                    "/home/fzuellich/Downloads/dewiktionary-20240401-pages-articles-multistream.xml.bz2"));
+    try (final InputStream in = Files.newInputStream(wiktionaryArchive);
         final BufferedInputStream bin = new BufferedInputStream(in); ) {
       long skipped = bin.skip(byteOffset);
       if (skipped == 0) {
@@ -36,16 +37,6 @@ public class WiktionaryReader {
       SAXParser saxParser = factory.newSAXParser();
       saxParser.parse(stream, mine);
 
-      /*final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-      StringBuilder resultBuilder = new StringBuilder();
-      String currentLine = reader.readLine();
-      while (!currentLine.trim().equals("</page>")) {
-          resultBuilder.append(currentLine);
-          currentLine = reader.readLine();
-      }
-      reader.close();
-      stream.close();*/
-      System.out.println(mine.getResult());
       return "TEST";
     } catch (CompressorException | IOException | ParserConfigurationException | SAXException e) {
       e.printStackTrace();
