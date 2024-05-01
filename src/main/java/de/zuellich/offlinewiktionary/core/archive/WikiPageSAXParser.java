@@ -9,12 +9,17 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class WikiPageSAXParser extends DefaultHandler {
 
-  private final HashMap<String, WikiPage> result = new HashMap<>();
+  private HashMap<String, WikiPage> result = new HashMap<>();
 
   private final Stack<String> lastStartElement = new Stack<>();
   private WikiPage.Builder current = new WikiPage.Builder();
 
   private StringBuilder elementValue;
+
+  @Override
+  public void startDocument() {
+    result = new HashMap<>();
+  }
 
   @Override
   public void characters(char[] ch, int start, int length) {
@@ -62,10 +67,12 @@ public class WikiPageSAXParser extends DefaultHandler {
       case "page":
         final WikiPage page = current.build();
         result.put(page.id(), page);
+      default:
+        return;
     }
   }
 
   public HashMap<String, WikiPage> getResult() {
-    return result;
+    return new HashMap<>(result);
   }
 }

@@ -2,6 +2,8 @@ package de.zuellich.offlinewiktionary.core;
 
 import de.zuellich.offlinewiktionary.core.archive.PageIndexParser;
 import de.zuellich.offlinewiktionary.core.archive.SeekEntry;
+import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,12 +11,13 @@ import java.util.TreeSet;
 import javafx.concurrent.Task;
 
 public class ImportTask extends Task<Void> {
-  private final WiktionaryApp.WiktionaryModel model;
+  private final WiktionaryModel model;
 
-  public ImportTask(WiktionaryApp.WiktionaryModel model) {
+  public ImportTask(WiktionaryModel model) {
     this.model = model;
   }
 
+  @SuppressFBWarnings(value = "EI2")
   @Override
   protected Void call() throws Exception {
     updateMessage("Parsing...");

@@ -1,6 +1,7 @@
 package de.zuellich.offlinewiktionary.core.archive;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Scanner;
 import java.util.TreeSet;
 import org.apache.commons.compress.compressors.CompressorException;
@@ -22,7 +23,7 @@ public class PageIndexParser {
     try (final BufferedInputStream bin = new BufferedInputStream(in);
         final CompressorInputStream stream =
             new CompressorStreamFactory().createCompressorInputStream(bin);
-        final Scanner scanner = new Scanner(stream); ) {
+        final Scanner scanner = new Scanner(stream, Charset.defaultCharset()); ) {
       scanner.useDelimiter(":");
       while (scanner.hasNext()) {
         long bytesToSeek = scanner.nextLong();

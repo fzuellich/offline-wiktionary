@@ -34,6 +34,8 @@ spotless {
 }
 
 dependencies {
+    compileOnly 'com.google.code.findbugs:annotations:3.0.1'
+
     // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
     implementation 'org.apache.commons:commons-compress:1.26.1'
 
