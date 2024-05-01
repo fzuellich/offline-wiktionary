@@ -13,11 +13,11 @@ import javafx.concurrent.Task;
 public class ImportTask extends Task<Void> {
   private final WiktionaryModel model;
 
+  @SuppressFBWarnings(value = "EI2")
   public ImportTask(WiktionaryModel model) {
     this.model = model;
   }
 
-  @SuppressFBWarnings(value = "EI2")
   @Override
   protected Void call() throws Exception {
     updateMessage("Parsing...");
