@@ -1,6 +1,8 @@
 package de.zuellich.offlinewiktionary.core;
 
+import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
+import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import java.io.File;
 import javafx.application.Application;
 import javafx.scene.Parent;
@@ -15,12 +17,12 @@ import javafx.stage.Stage;
 
 public class WiktionaryApp extends Application {
 
-  private final WiktionaryModel model = new WiktionaryModel();
+  private final WiktionaryModel model = new WiktionaryModel(new WiktionaryReader(null));
 
   private String searchHandler(String query) {
     System.out.println("You searched for: " + query);
     System.out.println("Result:\n" + model.lookupDefinition(query));
-    return model.lookupDefinition(query).orElse("Nothing found.");
+    return model.lookupDefinition(query).map(WikiPage::text).orElse("Nothing found.");
   }
 
   private Parent createContent(Stage primaryStage) {
@@ -52,7 +54,7 @@ public class WiktionaryApp extends Application {
         });
 
     Text definition = new Text("");
-    definition.setWrappingWidth(200);
+    definition.setWrappingWidth(800);
 
     TextField search = new TextField();
     search.disableProperty().bind(model.isReadyProperty().not());

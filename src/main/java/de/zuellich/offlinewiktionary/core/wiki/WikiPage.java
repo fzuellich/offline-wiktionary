@@ -1,10 +1,10 @@
 package de.zuellich.offlinewiktionary.core.wiki;
 
 /** Basic data for Wiki pages and a Builder utility for incremental parsing. */
-public record WikiPage(String title, String id, String format, String text) {
+public record WikiPage(String title, Integer id, String format, String text) {
   public static class Builder {
     private String title;
-    private String id;
+    private Integer id;
     private String format;
     private String text;
 
@@ -12,7 +12,7 @@ public record WikiPage(String title, String id, String format, String text) {
       this.title = title;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
       this.id = id;
     }
 
