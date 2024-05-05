@@ -5,6 +5,11 @@ import java.util.Objects;
 /** Holds information where to find a page. */
 public record SeekEntry(long bytesToSeek, int articleId, String title)
     implements Comparable<SeekEntry> {
+
+  public static SeekEntry forQuery(String query) {
+    return new SeekEntry(0, 0, query);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

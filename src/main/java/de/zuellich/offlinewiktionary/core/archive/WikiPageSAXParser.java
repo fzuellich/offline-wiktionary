@@ -7,9 +7,10 @@ import java.util.Stack;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
+/** Parse {@link WikiPage}s from XML. */
 public class WikiPageSAXParser extends DefaultHandler {
 
-  private HashMap<String, WikiPage> result = new HashMap<>();
+  private HashMap<Integer, WikiPage> result = new HashMap<>();
 
   private final Stack<String> lastStartElement = new Stack<>();
   private WikiPage.Builder current = new WikiPage.Builder();
@@ -51,16 +52,16 @@ public class WikiPageSAXParser extends DefaultHandler {
         break;
       case "id":
         if (Objects.equals(lastStartElement.peek(), "page")) {
-          current.setId(elementValue.toString());
+          current.setId(Integer.parseInt(elementValue.toString()));
         }
         break;
       case "text":
-        if (Objects.equals(lastStartElement.peek(), "page")) {
+        if (Objects.equals(lastStartElement.peek(), "revision")) {
           current.setText(elementValue.toString());
         }
         break;
       case "format":
-        if (Objects.equals(lastStartElement.peek(), "page")) {
+        if (Objects.equals(lastStartElement.peek(), "revision")) {
           current.setFormat(elementValue.toString());
         }
         break;
@@ -72,7 +73,7 @@ public class WikiPageSAXParser extends DefaultHandler {
     }
   }
 
-  public HashMap<String, WikiPage> getResult() {
+  public HashMap<Integer, WikiPage> getResult() {
     return new HashMap<>(result);
   }
 }

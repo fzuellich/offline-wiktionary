@@ -2,6 +2,7 @@ package de.zuellich.offlinewiktionary.core.resolution;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
 import de.zuellich.offlinewiktionary.core.exception.NoArchiveFoundException;
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
 import java.net.URISyntaxException;
@@ -14,7 +15,7 @@ class AdjacentResolutionStrategyTest {
 
   @Test
   public void testThrowsIfNoArchiveIsFoundAdjacent() {
-    final var model = new WiktionaryModel();
+    final var model = new WiktionaryModel(new WiktionaryReader(null));
     try {
       final URL resourceURL =
           AdjacentResolutionStrategyTest.class.getResource(
@@ -33,7 +34,7 @@ class AdjacentResolutionStrategyTest {
 
   @Test
   public void testCanFindAdjacentArchive() {
-    final var model = new WiktionaryModel();
+    final var model = new WiktionaryModel(new WiktionaryReader(null));
     try {
       final URL resourceURL =
           AdjacentResolutionStrategyTest.class.getResource(
