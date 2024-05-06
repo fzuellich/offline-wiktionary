@@ -1,9 +1,13 @@
 package de.zuellich.offlinewiktionary.core;
 
 import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
+import de.zuellich.offlinewiktionary.core.gui.WikiTextFlow;
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
+import de.zuellich.offlinewiktionary.core.markup.MarkupParser;
+import de.zuellich.offlinewiktionary.core.markup.MarkupToken;
 import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import java.io.File;
+import java.util.List;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -11,7 +15,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -53,25 +56,28 @@ public class WiktionaryApp extends Application {
           new Thread(task).start();
         });
 
-    Text definition = new Text("");
-    definition.setWrappingWidth(800);
+    final WikiTextFlow wikiTextFlow = new WikiTextFlow();
 
     TextField search = new TextField();
     search.disableProperty().bind(model.isReadyProperty().not());
     search.setOnAction(
         value -> {
           String result = searchHandler(search.getText());
-          definition.setText(result);
+          final MarkupParser parser = new MarkupParser();
+          final List<MarkupToken> parse = parser.parse(result);
+          wikiTextFlow.replaceChildren(parse);
         });
     Button fireSearch = new Button("Search");
     fireSearch.disableProperty().bind(model.isReadyProperty().not());
     fireSearch.setOnAction(
         value -> {
           String result = searchHandler(search.getText());
-          definition.setText(result);
+          final MarkupParser parser = new MarkupParser();
+          final List<MarkupToken> parse = parser.parse(result);
+          wikiTextFlow.replaceChildren(parse);
         });
 
-    return new VBox(status, anImport, search, fireSearch, definition);
+    return new VBox(status, anImport, search, fireSearch, wikiTextFlow);
   }
 
   @Override
