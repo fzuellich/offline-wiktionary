@@ -2,14 +2,18 @@ package de.zuellich.offlinewiktionary.core.markup;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class MarkupAssertions {
+public class TokenAssertions {
 
-  static void assertHeadline(MarkupToken token, int requiredLevel) {
-    if (token.getType() != MarkupTokenType.HEADING) {
+  private static void assertMatchingType(MarkupTokenType expected, MarkupToken token) {
+    if (!expected.equals(token.getType())) {
       fail(
           String.format(
-              "Expected token to be of type 'HEADING', but type is '%s'.", token.getType()));
+              "Expected token to be of type '%s', but got '%s'.", expected, token.getType()));
     }
+  }
+
+  static void assertHeadline(MarkupToken token, int requiredLevel) {
+    assertMatchingType(MarkupTokenType.HEADING, token);
 
     HeadingToken headingToken = (HeadingToken) token;
     if (headingToken.level() != requiredLevel) {
@@ -21,11 +25,7 @@ public class MarkupAssertions {
   }
 
   static void assertHeadline(MarkupToken token, int requiredLevel, String content) {
-    if (token.getType() != MarkupTokenType.HEADING) {
-      fail(
-          String.format(
-              "Expected token to be of type 'HEADING', but type is '%s'.", token.getType()));
-    }
+    assertMatchingType(MarkupTokenType.HEADING, token);
 
     final HeadingToken headingToken = (HeadingToken) token;
     if (headingToken.level() != requiredLevel) {
@@ -47,13 +47,22 @@ public class MarkupAssertions {
   }
 
   public static void assertText(MarkupToken token, String expectedText) {
-    if (token.getType() != MarkupTokenType.TEXT) {
-      fail(String.format("Expected token type to be 'TEXT' but is '%s'", token.getType()));
-    }
+    assertMatchingType(MarkupTokenType.TEXT, token);
 
     final TextToken textToken = (TextToken) token;
     if (!textToken.value().equals(expectedText)) {
       fail(String.format("Expected text value '%s' but got '%s'", expectedText, textToken.value()));
+    }
+  }
+
+  public static void assertLink(MarkupToken token, String expectedLabel, String expectedTarget) {
+    assertMatchingType(MarkupTokenType.LINK, token);
+    final LinkToken linkToken = (LinkToken) token;
+    if (!linkToken.label().equals(expectedLabel)) {
+      fail(String.format("Expected label '%s' but got '%s'", expectedLabel, linkToken.label()));
+    }
+    if (!linkToken.target().equals(expectedTarget)) {
+      fail(String.format("Expected target '%s' but got '%s'", expectedTarget, linkToken.target()));
     }
   }
 }

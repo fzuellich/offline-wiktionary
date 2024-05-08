@@ -4,6 +4,7 @@ import de.zuellich.offlinewiktionary.core.markup.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import javafx.scene.Node;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -11,7 +12,11 @@ import javafx.scene.text.TextFlow;
 /** Use JavaFX {@link javafx.scene.text.TextFlow} to display markdown. */
 public class WikiTextFlow extends TextFlow {
 
-  public WikiTextFlow() {}
+  private final LinkClickHandler linkClickHandler;
+
+  public WikiTextFlow(LinkClickHandler linkClickHandler) {
+    this.linkClickHandler = linkClickHandler;
+  }
 
   public void replaceChildren(Collection<MarkupToken> tokens) {
     final Collection<Node> nodes = tokensToChildren(tokens);
@@ -23,16 +28,21 @@ public class WikiTextFlow extends TextFlow {
     ArrayList<Node> result = new ArrayList<>(tokens.size());
     for (MarkupToken token : tokens) {
       switch (token.getType()) {
-        case TEXT -> result.add(textNode((TextToken) token));
         case LINK -> result.add(linkNode((LinkToken) token));
         case HEADING -> result.add(headingNode((HeadingToken) token));
+        default -> result.add(textNode((TextToken) token));
       }
     }
     return result;
   }
 
   private Node linkNode(LinkToken token) {
-    return Hyperlink(token.label());
+    final Hyperlink hyperlink = new Hyperlink(token.label());
+    hyperlink.setOnAction(
+        v -> {
+          linkClickHandler.handle(token.target());
+        });
+    return hyperlink;
   }
 
   private Node headingNode(HeadingToken token) {

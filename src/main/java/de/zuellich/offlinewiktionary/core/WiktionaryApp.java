@@ -1,6 +1,7 @@
 package de.zuellich.offlinewiktionary.core;
 
 import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
+import de.zuellich.offlinewiktionary.core.gui.LinkClickHandler;
 import de.zuellich.offlinewiktionary.core.gui.WikiTextFlow;
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
 import de.zuellich.offlinewiktionary.core.markup.MarkupParser;
@@ -21,11 +22,25 @@ import javafx.stage.Stage;
 public class WiktionaryApp extends Application {
 
   private final WiktionaryModel model = new WiktionaryModel(new WiktionaryReader(null));
+  private final TextField search;
+  private WikiTextFlow wikiTextFlow;
+
+  public WiktionaryApp() {
+    search = new TextField();
+  }
 
   private String searchHandler(String query) {
     System.out.println("You searched for: " + query);
     System.out.println("Result:\n" + model.lookupDefinition(query));
     return model.lookupDefinition(query).map(WikiPage::text).orElse("Nothing found.");
+  }
+
+  private void displayTerm(String term) {
+    search.setText(term);
+    String result = searchHandler(search.getText());
+    final MarkupParser parser = new MarkupParser();
+    final List<MarkupToken> parse = parser.parse(result);
+    wikiTextFlow.replaceChildren(parse);
   }
 
   private Parent createContent(Stage primaryStage) {
@@ -56,26 +71,17 @@ public class WiktionaryApp extends Application {
           new Thread(task).start();
         });
 
-    final WikiTextFlow wikiTextFlow = new WikiTextFlow();
-
-    TextField search = new TextField();
     search.disableProperty().bind(model.isReadyProperty().not());
-    search.setOnAction(
-        value -> {
-          String result = searchHandler(search.getText());
-          final MarkupParser parser = new MarkupParser();
-          final List<MarkupToken> parse = parser.parse(result);
-          wikiTextFlow.replaceChildren(parse);
-        });
+
+    final LinkClickHandler linkClickHandler = new LinkClickHandler();
+    wikiTextFlow = new WikiTextFlow(linkClickHandler);
+
+    linkClickHandler.onClick(this::displayTerm);
+
+    search.setOnAction(value -> displayTerm(search.getText()));
     Button fireSearch = new Button("Search");
     fireSearch.disableProperty().bind(model.isReadyProperty().not());
-    fireSearch.setOnAction(
-        value -> {
-          String result = searchHandler(search.getText());
-          final MarkupParser parser = new MarkupParser();
-          final List<MarkupToken> parse = parser.parse(result);
-          wikiTextFlow.replaceChildren(parse);
-        });
+    fireSearch.setOnAction(value -> displayTerm(search.getText()));
 
     return new VBox(status, anImport, search, fireSearch, wikiTextFlow);
   }
