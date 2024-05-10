@@ -6,6 +6,7 @@ import de.zuellich.offlinewiktionary.core.gui.WikiTextFlow;
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
 import de.zuellich.offlinewiktionary.core.markup.MarkupParser;
 import de.zuellich.offlinewiktionary.core.markup.MarkupToken;
+
 import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import java.io.File;
 import java.util.List;
