@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class TokenAssertions {
 
-  private static void assertMatchingType(MarkupTokenType expected, MarkupToken token) {
+  public static void assertMatchingType(MarkupTokenType expected, MarkupToken token) {
     if (!expected.equals(token.getType())) {
       fail(
           String.format(
@@ -55,6 +55,10 @@ public class TokenAssertions {
     }
   }
 
+  public static void assertLink(MarkupToken token, String expectedLabelAndTarget) {
+    assertLink(token, expectedLabelAndTarget, expectedLabelAndTarget);
+  }
+
   public static void assertLink(MarkupToken token, String expectedLabel, String expectedTarget) {
     assertMatchingType(MarkupTokenType.LINK, token);
     final LinkToken linkToken = (LinkToken) token;
@@ -63,6 +67,16 @@ public class TokenAssertions {
     }
     if (!linkToken.target().equals(expectedTarget)) {
       fail(String.format("Expected target '%s' but got '%s'", expectedTarget, linkToken.target()));
+    }
+  }
+
+  public static void assertIndent(MarkupToken token, int expectedLevel) {
+    assertMatchingType(MarkupTokenType.INDENT, token);
+    final IndentToken indentToken = (IndentToken) token;
+    if (indentToken.level() != expectedLevel) {
+      fail(
+          String.format(
+              "Expected indent level '%d' but got '%d'", expectedLevel, indentToken.level()));
     }
   }
 }

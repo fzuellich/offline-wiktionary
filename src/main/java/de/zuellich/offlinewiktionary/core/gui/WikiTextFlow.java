@@ -30,6 +30,7 @@ public class WikiTextFlow extends TextFlow {
       switch (token.getType()) {
         case LINK -> result.add(linkNode((LinkToken) token));
         case HEADING -> result.add(headingNode((HeadingToken) token));
+        case INDENT -> result.add(indentNode((IndentToken) token));
         default -> result.add(textNode((TextToken) token));
       }
     }
@@ -60,6 +61,12 @@ public class WikiTextFlow extends TextFlow {
     Text result = new Text();
     result.setText(token.value());
     result.setFont(Font.font(12));
+    return result;
+  }
+
+  private Text indentNode(IndentToken token) {
+    Text result = new Text();
+    result.setText("\t".repeat(Math.min(token.level(), 10)));
     return result;
   }
 }

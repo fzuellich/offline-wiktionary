@@ -1,6 +1,7 @@
 package de.zuellich.offlinewiktionary.core.markup;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /** See https://www.mediawiki.org/wiki/Help:Formatting */
 public class MarkupParser {
@@ -25,6 +26,12 @@ public class MarkupParser {
   private int pointer = 0;
 
   private final Stack<Integer> snapshot = new Stack<>();
+  private final List<Supplier<MarkupToken>> tokenParserPriority;
+
+  public MarkupParser() {
+    tokenParserPriority =
+        List.of(this::parseIndent, this::parseHeading, this::parseLink, this::parseText);
+  }
 
   /**
    * We expect the pointer to look at the first character that should be part of the text '==text=='
@@ -46,13 +53,13 @@ public class MarkupParser {
           break outer;
         }
       }
-      if (c == '=' && previous == '=') {
-        return new TextToken(value.toString());
-      } else {
-        value.append(c);
-      }
 
+      value.append(c);
       previous = c;
+
+      if (c == '\n') {
+        break;
+      }
     }
 
     return new TextToken(value.toString());
@@ -103,9 +110,9 @@ public class MarkupParser {
   /**
    * Ensure the supplied characters are encountered in order.
    *
-   * @throws MatchException indicating the expected characters were not in encountered.
+   * @throws MatchException indicating the expected characters were encountered.
    */
-  private void assertSequence(char... expectedChars) {
+  private void consumeInOrder(char... expectedChars) {
     for (char requiredChar : expectedChars) {
       char c = nextChar();
       if (c != requiredChar) {
@@ -113,6 +120,25 @@ public class MarkupParser {
             String.format("Expected to match '%s' but got '%s'", requiredChar, c), null);
       }
     }
+  }
+
+  /**
+   * Read characters as long as they match expected. Pointer is guaranteed to point to the last
+   * matching character that was consumed. I.e. calling nextChar() returns the next non-matching
+   * character.
+   *
+   * @return The number of matching characters consumed
+   */
+  private int consumeMatching(char expected) {
+    int consumed = 0;
+    // Important: we peek here, so we don't have to rewind the pointer if nextChar()
+    // doesn't match our expectation
+    while (hasNextChar() && peekNextChar() == expected) {
+      nextChar();
+      consumed++;
+    }
+
+    return consumed;
   }
 
   /**
@@ -141,15 +167,15 @@ public class MarkupParser {
   private LinkToken parseLink() {
     snapshotPointer();
     try {
-      assertSequence('[', '[');
+      consumeInOrder('[', '[');
       final String link = readTerminatedBy('|', ']');
       String label;
       char next = nextChar();
       if (next == '|') {
         label = readTerminatedBy(']');
-        assertSequence(']', ']');
+        consumeInOrder(']', ']');
       } else if (next == ']') {
-        assertSequence(']');
+        consumeInOrder(']');
         label = link;
       } else {
         throw new MatchException(
@@ -183,18 +209,15 @@ public class MarkupParser {
     MarkupToken contentToken = null;
     snapshotPointer();
 
-    // increment what we previously checked
-    int level = 0;
-    while (hasNextChar() && nextChar() == '=') {
-      level++;
+    if (hasNextChar() && peekNextChar() != '=') {
+      return null;
     }
+    int level = consumeMatching('=');
     if (level < 2) {
       restorePointer();
       return null;
     }
 
-    // rewind last read character, it's not a =
-    pointer--;
     contentToken = parseText();
 
     int requiredLevel = level;
@@ -211,27 +234,37 @@ public class MarkupParser {
     return new HeadingToken(level, contentToken);
   }
 
+  private IndentToken parseIndent() {
+    if (peekNextChar() != ':') {
+      return null;
+    }
+
+    int level = consumeMatching(':');
+    return new IndentToken(level);
+  }
+
+  private Optional<MarkupToken> nextToken() {
+    for (Supplier<MarkupToken> tokenCandidate : tokenParserPriority) {
+      MarkupToken nextToken = tokenCandidate.get();
+      if (nextToken != null) {
+        return Optional.of(nextToken);
+      }
+    }
+
+    return Optional.empty();
+  }
+
   public List<MarkupToken> parse(String input) {
     this.input = input.toCharArray();
     this.pointer = -1;
     this.snapshot.clear();
     ArrayList<MarkupToken> tokens = new ArrayList<>();
     while (hasNextChar()) {
-      final HeadingToken headingToken = parseHeading();
-      if (headingToken != null) {
-        tokens.add(headingToken);
-        continue;
-      }
-      final LinkToken linkToken = parseLink();
-      if (linkToken != null) {
-        tokens.add(linkToken);
-        continue;
-      }
-      final TextToken textToken = parseText();
-      if (textToken != null) {
-        tokens.add(textToken);
-        continue;
-      }
+      final Optional<MarkupToken> possibleNextToken = nextToken();
+      final MarkupToken markupToken =
+          possibleNextToken.orElseThrow(
+              () -> new IllegalStateException("No token produced. Should never happen."));
+      tokens.add(markupToken);
     }
     return tokens;
   }

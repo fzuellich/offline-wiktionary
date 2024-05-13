@@ -11,13 +11,31 @@ class MarkupParserTest {
 
   @Test
   public void canParseSimpleText() {
-    String input = "Hello World!";
-    final MarkupParser parser = new MarkupParser();
-    List<MarkupToken> result = parser.parse(input);
+    MarkupParser parser = new MarkupParser();
+    List<MarkupToken> result = parser.parse("Hello World!");
     assertEquals(1, result.size());
+    assertText(result.get(0), "Hello World!");
 
-    MarkupToken parsedToken = result.getFirst();
-    assertText(parsedToken, "Hello World!");
+    result = parser.parse("Here : is no indent!");
+    assertEquals(1, result.size());
+    assertText(result.get(0), "Here : is no indent!");
+
+    result =
+        parser.parse("""
+                We can also parse
+
+                multi-line text.""");
+    assertEquals(3, result.size());
+    assertText(result.get(0), "We can also parse\n");
+    assertText(result.get(1), "\n");
+    assertText(result.get(2), "multi-line text.");
+
+    // Empty lines?
+    result = parser.parse("""
+                Text
+                """);
+    assertEquals(1, result.size());
+    assertText(result.get(0), "Text\n");
   }
 
   @Test
@@ -90,11 +108,11 @@ class MarkupParserTest {
   public void canParseSimpleDocument() {
     String document =
         """
-                {{SomeMacro}}
-                ==the heading==
-                a paragraph
-                ===another heading===
-                {{Macro|With|Parameters}}""";
+                        {{SomeMacro}}
+                        ==the heading==
+                        a paragraph
+                        ===another heading===
+                        {{Macro|With|Parameters}}""";
     final MarkupParser parser = new MarkupParser();
     List<MarkupToken> result = parser.parse(document);
     assertEquals(5, result.size());
@@ -107,6 +125,27 @@ class MarkupParserTest {
     assertText(result.get(4), "{{Macro|With|Parameters}}");
   }
 
+  /**
+   * We used to forget to rewind the pointer after consuming characters, which would cause an
+   * endless loop here.
+   */
+  @Test
+  public void regressionTestRewindAfterConsumingSameCharacters() {
+    final MarkupParser parser = new MarkupParser();
+    final List<MarkupToken> parse =
+        parser.parse(
+            """
+                {{Nebenformen}}
+                :[[Friede]]
+                """);
+
+    assertEquals(4, parse.size());
+    assertText(parse.get(0), "{{Nebenformen}}\n");
+    assertIndent(parse.get(1), 1);
+    assertLink(parse.get(2), "Friede", "Friede");
+    assertText(parse.get(3), "\n");
+  }
+
   @Test
   public void canParseRealDocument() {
     final MarkupParser parser = new MarkupParser();
@@ -115,6 +154,50 @@ class MarkupParserTest {
         () -> {
           parser.parse(Fixtures.REAL_PAGE_MARKUP);
         });
+  }
+
+  @Test
+  public void canParseIndent() {
+    final MarkupParser parser = new MarkupParser();
+    List<MarkupToken> result = parser.parse(": Indent Level 1");
+    assertIndent(result.get(0), 1);
+    assertText(result.get(1), " Indent Level 1");
+
+    result = parser.parse(":: Indent Level 2");
+    assertIndent(result.get(0), 2);
+    assertText(result.get(1), " Indent Level 2");
+
+    result = parser.parse("::: Indent Level 3");
+    assertIndent(result.get(0), 3);
+    assertText(result.get(1), " Indent Level 3");
+
+    result = parser.parse(": Another [[Example]]");
+    assertIndent(result.get(0), 1);
+    assertText(result.get(1), " Another ");
+    assertLink(result.get(2), "Example", "Example");
+
+    result = parser.parse(":  With extra whitespace");
+    assertIndent(result.get(0), 1);
+    assertText(result.get(1), "  With extra whitespace");
+
+    result = parser.parse("""
+                : Line 1
+                : Line 2 [[WithLink]]""");
+    assertIndent(result.get(0), 1);
+    assertText(result.get(1), " Line 1\n");
+    assertIndent(result.get(2), 1);
+    assertText(result.get(3), " Line 2 ");
+    assertLink(result.get(4), "WithLink");
+
+    // We mostly encounter indent with a space in between the colon and text,
+    // but these forms are also possible:
+    result = parser.parse(":[[Link]]");
+    assertIndent(result.get(0), 1);
+    assertLink(result.get(1), "Link");
+
+    result = parser.parse("::More");
+    assertIndent(result.get(0), 2);
+    assertText(result.get(1), "More");
   }
 
   public void testVariousOverflowAndUnderflowSituations() {}
