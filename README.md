@@ -8,7 +8,7 @@ Part of the project implements a PEG-based parser to convert MediaWiki markup to
 page content in the app. Belows is the implemented grammar that supports only a tiny subset:
 
 ```text
-Markup              <- Headline / TextContent
+Markup              <- Headline / Indent / TextContent
 TextContent         <- Macro / Link / Text*
 
 Headline            <- Headline2Start TextContent+ Headline2End
@@ -23,6 +23,8 @@ Link                <- LinkStart LinkText ('|' LinkText)? LinkEnd (! ' ' & utf-8
 LinkStart           <- '[['
 LinkEnd             <- ']]'
 LinkText            <- !'|' & !LinkEnd & utf-8 symbol
+
+Indent              <- ':'+ TextContent
 
 Text                <-  (!MacroStart & !MacroEnd 
                         & !HeadlineStart & !HeadlineEnd 
