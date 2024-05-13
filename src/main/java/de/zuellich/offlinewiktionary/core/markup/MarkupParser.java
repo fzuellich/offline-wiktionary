@@ -28,6 +28,18 @@ public class MarkupParser {
   private final Stack<Integer> snapshot = new Stack<>();
   private final List<Supplier<MarkupToken>> tokenParserPriority;
 
+  /**
+   * Helper function for brevity in tests. Do allow for dependency injection consider the
+   * straightforward way and create a new instance in the constructor.
+   *
+   * @param input String to parse
+   * @return A list of parsed tokens.
+   */
+  public static List<MarkupToken> parseString(String input) {
+    var parser = new MarkupParser();
+    return parser.parse(input);
+  }
+
   public MarkupParser() {
     tokenParserPriority =
         List.of(this::parseIndent, this::parseHeading, this::parseLink, this::parseText);
