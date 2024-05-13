@@ -48,4 +48,11 @@ test {
     useJUnitPlatform()
 }
 
+task testParserOnly(type: Test) {
+    description "Only run the tests related to the wiki text parser."
+    useJUnitPlatform {
+        includeTags("MarkupParser")
+    }
+}
+
 mainClassName = 'de.zuellich.offlinewiktionary.core.WiktionaryApp'
