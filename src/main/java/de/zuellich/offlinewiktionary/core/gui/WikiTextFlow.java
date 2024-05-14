@@ -1,11 +1,13 @@
 package de.zuellich.offlinewiktionary.core.gui;
 
 import de.zuellich.offlinewiktionary.core.markup.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Collection;
 import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 
@@ -13,6 +15,7 @@ import javafx.scene.text.TextFlow;
 public class WikiTextFlow extends TextFlow {
 
   private final LinkClickHandler linkClickHandler;
+  private boolean italicsEnabled = false;
 
   public WikiTextFlow(LinkClickHandler linkClickHandler) {
     this.linkClickHandler = linkClickHandler;
@@ -24,6 +27,8 @@ public class WikiTextFlow extends TextFlow {
     this.getChildren().addAll(nodes);
   }
 
+  // If a token type isn't mapped yet, we rather skip it than to render something unintelligible.
+  @SuppressFBWarnings("SF")
   private Collection<Node> tokensToChildren(Collection<MarkupToken> tokens) {
     ArrayList<Node> result = new ArrayList<>(tokens.size());
     for (MarkupToken token : tokens) {
@@ -31,14 +36,31 @@ public class WikiTextFlow extends TextFlow {
         case LINK -> result.add(linkNode((LinkToken) token));
         case HEADING -> result.add(headingNode((HeadingToken) token));
         case INDENT -> result.add(indentNode((IndentToken) token));
-        default -> result.add(textNode((TextToken) token));
+        case ITALIC -> result.addAll(italicNode((ItalicToken) token));
+        case TEXT -> result.add(textNode((TextToken) token));
       }
     }
     return result;
   }
 
+  private Font getFont(double size) {
+    if (!italicsEnabled) {
+      return Font.font("System", size);
+    }
+
+    return Font.font("System", FontPosture.ITALIC, size);
+  }
+
+  private Collection<Node> italicNode(ItalicToken token) {
+    italicsEnabled = true;
+    final Collection<Node> nodes = tokensToChildren(token.value());
+    italicsEnabled = false;
+    return nodes;
+  }
+
   private Node linkNode(LinkToken token) {
     final Hyperlink hyperlink = new Hyperlink(token.label());
+    hyperlink.setFont(getFont(12));
     hyperlink.setOnAction(
         v -> {
           linkClickHandler.handle(token.target());
@@ -52,7 +74,7 @@ public class WikiTextFlow extends TextFlow {
     }
     Text result = new Text();
     result.setText(((TextToken) token.value()).value());
-    result.setFont(Font.font(32));
+    result.setFont(getFont(32));
     // TODO have another TextFlow internally to display things like Macros etc?
     return result;
   }
@@ -60,7 +82,7 @@ public class WikiTextFlow extends TextFlow {
   private Text textNode(TextToken token) {
     Text result = new Text();
     result.setText(token.value());
-    result.setFont(Font.font(12));
+    result.setFont(getFont(12));
     return result;
   }
 

@@ -113,6 +113,13 @@ public class TokenAssertions {
     };
   }
 
+  public static Consumer<MarkupToken> italic(List<Consumer<MarkupToken>> inner) {
+    return (MarkupToken token) -> {
+      assertMatchingType(MarkupTokenType.ITALIC, token);
+      assertTokensStrict(((ItalicToken) token).value(), inner);
+    };
+  }
+
   /**
    * Iterate over the provided tokens and see if the supplied matchers match the corresponding
    * token. You can supply more tokens than matchers, but not the other way around. If you want to

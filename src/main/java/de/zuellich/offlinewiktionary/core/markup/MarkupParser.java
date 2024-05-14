@@ -21,7 +21,9 @@ public class MarkupParser {
         new char[] {'=', '='},
         new char[] {'[', '['},
         new char[] {']', ']'},
+        new char[] {'\'', '\''}
       };
+  private final List<Supplier<MarkupToken>> textTokenParserPriority;
   private char[] input;
   private int pointer = 0;
 
@@ -42,7 +44,13 @@ public class MarkupParser {
 
   public MarkupParser() {
     tokenParserPriority =
-        List.of(this::parseIndent, this::parseHeading, this::parseLink, this::parseText);
+        List.of(
+            this::parseIndent,
+            this::parseHeading,
+            this::parseItalicToken,
+            this::parseLink,
+            this::parseText);
+    textTokenParserPriority = List.of(this::parseLink, this::parseText);
   }
 
   /**
@@ -74,6 +82,16 @@ public class MarkupParser {
       }
     }
 
+    // Don't return empty text tokens, otherwise some iterations might never terminate. For example:
+    // ''test'' will always parse a text token ("test") and then terminate, because it encounters
+    // the italics literal.
+    // However, we are already in an italics literal and the control is only given back to the
+    // italics parser, if we can
+    // parse no more tokens. And generating empty TextTokens, that don't advance the pointer don't
+    // fit here.
+    if (value.isEmpty()) {
+      return null;
+    }
     return new TextToken(value.toString());
   }
 
@@ -191,6 +209,20 @@ public class MarkupParser {
     return value.toString();
   }
 
+  private List<MarkupToken> parseTextContent() {
+    final List<MarkupToken> result = new ArrayList<>();
+    while (hasNextChar()) {
+      final Optional<MarkupToken> possibleNextToken = nextTextContentToken();
+      if (possibleNextToken.isEmpty()) {
+        break;
+      }
+
+      result.add(possibleNextToken.get());
+    }
+
+    return result;
+  }
+
   private LinkToken parseLink() {
     snapshotPointer();
     try {
@@ -267,6 +299,31 @@ public class MarkupParser {
       return new IndentToken(level);
     }
     return null;
+  }
+
+  private ItalicToken parseItalicToken() {
+    snapshotPointer();
+    try {
+      consumeInOrder('\'', '\'');
+      List<MarkupToken> value = parseTextContent();
+      consumeInOrder('\'', '\'');
+      eraseSnapshot();
+      return new ItalicToken(value);
+    } catch (MatchException e) {
+      restorePointer();
+      return null;
+    }
+  }
+
+  private Optional<MarkupToken> nextTextContentToken() {
+    for (Supplier<MarkupToken> tokenCandidate : textTokenParserPriority) {
+      MarkupToken nextToken = tokenCandidate.get();
+      if (nextToken != null) {
+        return Optional.of(nextToken);
+      }
+    }
+
+    return Optional.empty();
   }
 
   private Optional<MarkupToken> nextToken() {

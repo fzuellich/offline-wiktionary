@@ -65,6 +65,20 @@ class MarkupParserTest {
     assertText(parse.get(3), "\n");
   }
 
+  /**
+   * Previously there were circumstance where our text parser generated empty text tokens, that
+   * would prevent some loops from terminating. Avoid this.
+   */
+  @Test
+  public void regressionTestTerminatesWithoutEmptyText() {
+    assertTimeoutPreemptively(
+        Duration.ofMillis(10),
+        () -> {
+          final List<MarkupToken> result = MarkupParser.parseString("''test''");
+          assertTokens(result, List.of(italic(List.of(text("test")))));
+        });
+  }
+
   @Test
   public void canParseRealDocument() {
     final MarkupParser parser = new MarkupParser();
