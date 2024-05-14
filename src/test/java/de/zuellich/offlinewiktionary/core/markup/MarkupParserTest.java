@@ -33,6 +33,18 @@ class MarkupParserTest {
   }
 
   /**
+   * Some tokens check if they are at the beginning of a line. At the beginning of the line means
+   * either: - after a newline - at the beginning of input So to test if they are at the beginning
+   * of the line is more complex than just checking if the last character was a '\n'.
+   */
+  @Test
+  public void regressionTestNewlineOrBeginningOfInput() {
+    final MarkupParser parser = new MarkupParser();
+    final List<MarkupToken> result = parser.parse(": I'm at the beginning");
+    assertTokens(result, List.of(indent(1), text(" I'm at the beginning")));
+  }
+
+  /**
    * We used to forget to rewind the pointer after consuming characters, which would cause an
    * endless loop here.
    */

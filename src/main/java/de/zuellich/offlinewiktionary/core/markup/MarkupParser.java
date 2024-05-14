@@ -77,6 +77,21 @@ public class MarkupParser {
     return new TextToken(value.toString());
   }
 
+  /**
+   * Check if the previous character matches c. If pointer has not moved yet, then false is
+   * returned.
+   *
+   * @param c
+   * @return false if character is not matching, or pointer out of bounds.
+   */
+  private boolean currentCharMatches(char c) {
+    if (pointer < 0) {
+      return false;
+    }
+
+    return this.input[pointer] == c;
+  }
+
   /** Look at next character, but don't advance pointer */
   private char peekNextChar() {
     if (pointer == this.input.length - 1) {
@@ -247,12 +262,11 @@ public class MarkupParser {
   }
 
   private IndentToken parseIndent() {
-    if (peekNextChar() != ':') {
-      return null;
+    if ((currentCharMatches('\n') || pointer == -1) && peekNextChar() == ':') {
+      int level = consumeMatching(':');
+      return new IndentToken(level);
     }
-
-    int level = consumeMatching(':');
-    return new IndentToken(level);
+    return null;
   }
 
   private Optional<MarkupToken> nextToken() {

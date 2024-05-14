@@ -34,7 +34,7 @@ public class MarkupParserIndentTest {
                 : Line 2 [[WithLink]]""");
     assertTokensStrict(
         result,
-        List.of(indent(1), text(" Line 1\n"), indent(1), text(" Line 2"), link("WithLink")));
+        List.of(indent(1), text(" Line 1\n"), indent(1), text(" Line 2 "), link("WithLink")));
 
     // We mostly encounter indent with a space in between the colon and text,
     // but these forms are also possible:
