@@ -1,9 +1,7 @@
 package de.zuellich.offlinewiktionary.core.archive;
 
 import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Stack;
+import java.util.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -12,10 +10,10 @@ public class WikiPageSAXParser extends DefaultHandler {
 
   private HashMap<Integer, WikiPage> result = new HashMap<>();
 
-  private final Stack<String> lastStartElement = new Stack<>();
+  private final ArrayDeque<String> lastStartElement = new ArrayDeque<>();
   private WikiPage.Builder current = new WikiPage.Builder();
 
-  private StringBuilder elementValue;
+  private StringBuilder elementValue = new StringBuilder();
 
   @Override
   public void startDocument() {
@@ -24,11 +22,7 @@ public class WikiPageSAXParser extends DefaultHandler {
 
   @Override
   public void characters(char[] ch, int start, int length) {
-    if (elementValue == null) {
-      elementValue = new StringBuilder();
-    } else {
-      elementValue.append(ch, start, length);
-    }
+    elementValue.append(ch, start, length);
   }
 
   @Override
@@ -68,12 +62,13 @@ public class WikiPageSAXParser extends DefaultHandler {
       case "page":
         final WikiPage page = current.build();
         result.put(page.id(), page);
+        break;
       default:
         return;
     }
   }
 
-  public HashMap<Integer, WikiPage> getResult() {
+  public Map<Integer, WikiPage> getResult() {
     return new HashMap<>(result);
   }
 }

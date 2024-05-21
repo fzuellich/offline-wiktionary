@@ -3,7 +3,8 @@ plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.10'
     id 'com.diffplug.spotless' version '6.25.0'
-    id 'com.github.spotbugs' version '6.0.13'
+    id 'net.ltgt.errorprone' version '3.1.0'
+    id 'net.ltgt.nullaway' version '2.0.0'
 }
 
 group 'de.zuellich'
@@ -33,9 +34,16 @@ spotless {
     }
 }
 
+nullaway {
+    annotatedPackages.add("de.zuellich.offlinewiktionary")
+}
+
 dependencies {
-    compileOnly 'com.google.code.findbugs:annotations:3.0.1'
-    testCompileOnly 'com.google.code.findbugs:annotations:3.0.1'
+    // Error prone dependencies
+    errorprone("com.google.errorprone:error_prone_core:2.27.1")
+    errorprone "com.uber.nullaway:nullaway:0.10.26"
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    // end of error prone dependencies
 
     // https://mvnrepository.com/artifact/org.apache.commons/commons-compress
     implementation 'org.apache.commons:commons-compress:1.26.1'
@@ -56,5 +64,13 @@ task testParserOnly(type: Test) {
         includeTags("MarkupParser")
     }
 }
+
+tasks.compileJava {
+    // For now we are happy without proper logging
+    options.errorprone.disable("CatchAndPrintStackTrace")
+    // Only really consider null errors for now in CI
+    options.errorprone.error("NullAway")
+}
+
 
 mainClassName = 'de.zuellich.offlinewiktionary.core.WiktionaryApp'

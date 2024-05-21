@@ -23,15 +23,17 @@ public class MarkupParser {
         new char[] {']', ']'},
         new char[] {'\'', '\''}
       };
-  private final List<Supplier<MarkupToken>> textTokenParserPriority;
-  private char[] input;
+
+  private char[] input = new char[0];
   private int pointer = 0;
 
-  private final Stack<Integer> snapshot = new Stack<>();
-  private final List<Supplier<MarkupToken>> tokenParserPriority;
+  private final ArrayDeque<Integer> snapshot = new ArrayDeque<>();
+
+  private final List<Supplier<Optional<? extends MarkupToken>>> textTokenParserPriority;
+  private final List<Supplier<Optional<? extends MarkupToken>>> tokenParserPriority;
 
   /**
-   * Helper function for brevity in tests. Do allow for dependency injection consider the
+   * Helper function for brevity in tests. To allow for dependency injection consider the
    * straightforward way and create a new instance in the constructor.
    *
    * @param input String to parse
@@ -57,7 +59,7 @@ public class MarkupParser {
    * We expect the pointer to look at the first character that should be part of the text '==text=='
    * ^- point to t '=text' ^- point to the =, as it's part of the text and not an operator
    */
-  private TextToken parseText() {
+  private Optional<TextToken> parseText() {
     final StringBuilder value = new StringBuilder();
     char previous = '\u0000';
     outer:
@@ -90,16 +92,16 @@ public class MarkupParser {
     // parse no more tokens. And generating empty TextTokens, that don't advance the pointer don't
     // fit here.
     if (value.isEmpty()) {
-      return null;
+      return Optional.empty();
     }
-    return new TextToken(value.toString());
+    return Optional.of(new TextToken(value.toString()));
   }
 
   /**
    * Check if the previous character matches c. If pointer has not moved yet, then false is
    * returned.
    *
-   * @param c
+   * @param c character to check
    * @return false if character is not matching, or pointer out of bounds.
    */
   private boolean currentCharMatches(char c) {
@@ -119,9 +121,9 @@ public class MarkupParser {
   }
 
   /**
-   * Advance pointer and return character under new position
+   * Advance pointer and return character at new position
    *
-   * @return
+   * @return character at the new position
    */
   private char nextChar() {
     if (pointer + 1 >= input.length) {
@@ -212,7 +214,7 @@ public class MarkupParser {
   private List<MarkupToken> parseTextContent() {
     final List<MarkupToken> result = new ArrayList<>();
     while (hasNextChar()) {
-      final Optional<MarkupToken> possibleNextToken = nextTextContentToken();
+      final Optional<? extends MarkupToken> possibleNextToken = nextTextContentToken();
       if (possibleNextToken.isEmpty()) {
         break;
       }
@@ -223,7 +225,7 @@ public class MarkupParser {
     return result;
   }
 
-  private LinkToken parseLink() {
+  private Optional<LinkToken> parseLink() {
     snapshotPointer();
     try {
       consumeInOrder('[', '[');
@@ -252,10 +254,10 @@ public class MarkupParser {
       }
 
       eraseSnapshot();
-      return new LinkToken(label, link);
+      return Optional.of(new LinkToken(label, link));
     } catch (MatchException e) {
       restorePointer();
-      return null;
+      return Optional.empty();
     }
   }
 
@@ -264,20 +266,19 @@ public class MarkupParser {
    * the whitespace or '===heading===' ^- we want to point to the character indicating an additional
    * level
    */
-  private HeadingToken parseHeading() {
-    MarkupToken contentToken = null;
+  private Optional<HeadingToken> parseHeading() {
     snapshotPointer();
 
     if (hasNextChar() && peekNextChar() != '=') {
-      return null;
+      return Optional.empty();
     }
     int level = consumeMatching('=');
     if (level < 2) {
       restorePointer();
-      return null;
+      return Optional.empty();
     }
 
-    contentToken = parseText();
+    Optional<TextToken> contentToken = parseText();
 
     int requiredLevel = level;
     while (hasNextChar() && nextChar() == '=') {
@@ -286,51 +287,51 @@ public class MarkupParser {
 
     if (requiredLevel != 0) {
       restorePointer();
-      return null;
+      return Optional.empty();
     }
 
     eraseSnapshot();
-    return new HeadingToken(level, contentToken);
+    return Optional.of(new HeadingToken(level, contentToken.orElse(null)));
   }
 
-  private IndentToken parseIndent() {
+  private Optional<IndentToken> parseIndent() {
     if ((currentCharMatches('\n') || pointer == -1) && peekNextChar() == ':') {
       int level = consumeMatching(':');
-      return new IndentToken(level);
+      return Optional.of(new IndentToken(level));
     }
-    return null;
+    return Optional.empty();
   }
 
-  private ItalicToken parseItalicToken() {
+  private Optional<ItalicToken> parseItalicToken() {
     snapshotPointer();
     try {
       consumeInOrder('\'', '\'');
       List<MarkupToken> value = parseTextContent();
       consumeInOrder('\'', '\'');
       eraseSnapshot();
-      return new ItalicToken(value);
+      return Optional.of(new ItalicToken(value));
     } catch (MatchException e) {
       restorePointer();
-      return null;
+      return Optional.empty();
     }
   }
 
-  private Optional<MarkupToken> nextTextContentToken() {
-    for (Supplier<MarkupToken> tokenCandidate : textTokenParserPriority) {
-      MarkupToken nextToken = tokenCandidate.get();
-      if (nextToken != null) {
-        return Optional.of(nextToken);
+  private Optional<? extends MarkupToken> nextTextContentToken() {
+    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : textTokenParserPriority) {
+      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
+      if (nextToken.isPresent()) {
+        return nextToken;
       }
     }
 
     return Optional.empty();
   }
 
-  private Optional<MarkupToken> nextToken() {
-    for (Supplier<MarkupToken> tokenCandidate : tokenParserPriority) {
-      MarkupToken nextToken = tokenCandidate.get();
-      if (nextToken != null) {
-        return Optional.of(nextToken);
+  private Optional<? extends MarkupToken> nextToken() {
+    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : tokenParserPriority) {
+      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
+      if (nextToken.isPresent()) {
+        return nextToken;
       }
     }
 
@@ -343,7 +344,7 @@ public class MarkupParser {
     this.snapshot.clear();
     ArrayList<MarkupToken> tokens = new ArrayList<>();
     while (hasNextChar()) {
-      final Optional<MarkupToken> possibleNextToken = nextToken();
+      final Optional<? extends MarkupToken> possibleNextToken = nextToken();
       final MarkupToken markupToken =
           possibleNextToken.orElseThrow(
               () -> new IllegalStateException("No token produced. Should never happen."));

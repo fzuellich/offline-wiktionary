@@ -23,12 +23,13 @@ public class WiktionaryApp extends Application {
 
   private final WiktionaryModel model = new WiktionaryModel(new WiktionaryReader(null));
   private final TextField search;
-  private WikiTextFlow wikiTextFlow;
+  private final WikiTextFlow wikiTextFlow;
   private final LinkClickHandler linkClickHandler;
 
   public WiktionaryApp() {
     search = new TextField();
     linkClickHandler = new LinkClickHandler();
+    wikiTextFlow = new WikiTextFlow(linkClickHandler);
   }
 
   private String searchHandler(String query) {
@@ -74,8 +75,6 @@ public class WiktionaryApp extends Application {
         });
 
     search.disableProperty().bind(model.isReadyProperty().not());
-
-    wikiTextFlow = new WikiTextFlow(linkClickHandler);
 
     linkClickHandler.onClick(this::displayTerm);
 
