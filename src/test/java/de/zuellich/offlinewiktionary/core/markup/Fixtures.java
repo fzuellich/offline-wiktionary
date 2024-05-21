@@ -1,10 +1,7 @@
 package de.zuellich.offlinewiktionary.core.markup;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 public class Fixtures {
   // From https://en.wiktionary.org/wiki/Frieden
-  @SuppressFBWarnings("HSC")
   public static final String REAL_PAGE_MARKUP =
       """
             {{Siehe auch|[[frieden]]}}

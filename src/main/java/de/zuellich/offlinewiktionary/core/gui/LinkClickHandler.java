@@ -1,6 +1,5 @@
 package de.zuellich.offlinewiktionary.core.gui;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayDeque;
 import java.util.function.Consumer;
 import javafx.beans.property.BooleanProperty;
@@ -50,9 +49,6 @@ public class LinkClickHandler {
     historyEmptyProperty.set(history.isEmpty());
   }
 
-  @SuppressFBWarnings(
-      value = "EI",
-      justification = "We do want to expose this property for use in JavaFX")
   public BooleanProperty isHistoryEmptyProperty() {
     return historyEmptyProperty;
   }

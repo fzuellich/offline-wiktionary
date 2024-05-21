@@ -3,7 +3,6 @@ package de.zuellich.offlinewiktionary.core;
 import de.zuellich.offlinewiktionary.core.archive.PageIndexParser;
 import de.zuellich.offlinewiktionary.core.archive.SeekEntry;
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +12,6 @@ import javafx.concurrent.Task;
 public class ImportTask extends Task<Void> {
   private final WiktionaryModel model;
 
-  @SuppressFBWarnings(value = "EI2")
   public ImportTask(WiktionaryModel model) {
     this.model = model;
   }

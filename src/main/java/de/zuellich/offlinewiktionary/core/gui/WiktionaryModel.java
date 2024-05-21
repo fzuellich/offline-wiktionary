@@ -4,7 +4,6 @@ import de.zuellich.offlinewiktionary.core.archive.SeekEntry;
 import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
 import de.zuellich.offlinewiktionary.core.resolution.AdjacentResolutionStrategy;
 import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
@@ -21,9 +20,6 @@ public class WiktionaryModel {
     this.wiktionaryReader = reader;
   }
 
-  @SuppressFBWarnings(
-      value = "EI",
-      justification = "We do want to expose this property for use in JavaFX")
   public BooleanProperty isReadyProperty() {
     return isReady;
   }
@@ -49,9 +45,6 @@ public class WiktionaryModel {
     return wiktionaryReader.retrieve(possibleEntry);
   }
 
-  @SuppressFBWarnings(
-      value = "EI",
-      justification = "We do want to expose this property for use in JavaFX")
   public ReadOnlyObjectProperty<Path> indexProperty() {
     return index.getReadOnlyProperty();
   }

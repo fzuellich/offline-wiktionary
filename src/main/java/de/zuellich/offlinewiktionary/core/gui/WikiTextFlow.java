@@ -1,7 +1,6 @@
 package de.zuellich.offlinewiktionary.core.gui;
 
 import de.zuellich.offlinewiktionary.core.markup.*;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Collection;
 import javafx.scene.Node;
@@ -28,7 +27,6 @@ public class WikiTextFlow extends TextFlow {
   }
 
   // If a token type isn't mapped yet, we rather skip it than to render something unintelligible.
-  @SuppressFBWarnings("SF")
   private Collection<Node> tokensToChildren(Collection<MarkupToken> tokens) {
     ArrayList<Node> result = new ArrayList<>(tokens.size());
     for (MarkupToken token : tokens) {
