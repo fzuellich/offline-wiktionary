@@ -24,9 +24,11 @@ public class WiktionaryApp extends Application {
   private final WiktionaryModel model = new WiktionaryModel(new WiktionaryReader(null));
   private final TextField search;
   private WikiTextFlow wikiTextFlow;
+  private final LinkClickHandler linkClickHandler;
 
   public WiktionaryApp() {
     search = new TextField();
+    linkClickHandler = new LinkClickHandler();
   }
 
   private String searchHandler(String query) {
@@ -37,7 +39,7 @@ public class WiktionaryApp extends Application {
 
   private void displayTerm(String term) {
     search.setText(term);
-    String result = searchHandler(search.getText());
+    String result = searchHandler(term);
     final MarkupParser parser = new MarkupParser();
     final List<MarkupToken> parse = parser.parse(result);
     wikiTextFlow.replaceChildren(parse);
@@ -73,17 +75,20 @@ public class WiktionaryApp extends Application {
 
     search.disableProperty().bind(model.isReadyProperty().not());
 
-    final LinkClickHandler linkClickHandler = new LinkClickHandler();
     wikiTextFlow = new WikiTextFlow(linkClickHandler);
 
     linkClickHandler.onClick(this::displayTerm);
 
-    search.setOnAction(value -> displayTerm(search.getText()));
+    search.setOnAction(value -> linkClickHandler.handle(search.getText()));
+    Button back = new Button("Back");
+    back.disableProperty().bind(linkClickHandler.isHistoryEmptyProperty());
+    back.setOnAction(value -> linkClickHandler.historyBack());
+
     Button fireSearch = new Button("Search");
     fireSearch.disableProperty().bind(model.isReadyProperty().not());
-    fireSearch.setOnAction(value -> displayTerm(search.getText()));
+    fireSearch.setOnAction(value -> linkClickHandler.handle(search.getText()));
 
-    return new VBox(status, anImport, search, fireSearch, wikiTextFlow);
+    return new VBox(status, anImport, search, back, fireSearch, wikiTextFlow);
   }
 
   @Override
