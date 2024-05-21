@@ -3,6 +3,7 @@ package de.zuellich.offlinewiktionary.core.archive;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TreeSet;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
@@ -18,7 +19,7 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory;
 public class PageIndexParser {
 
   /** A BZIP2 compressed input stream, will be wrapped in a {@link BufferedInputStream}. */
-  public TreeSet<SeekEntry> parse(InputStream in) {
+  public Set<SeekEntry> parse(InputStream in) {
     final TreeSet<SeekEntry> result = new TreeSet<>();
     try (final BufferedInputStream bin = new BufferedInputStream(in);
         final CompressorInputStream stream =

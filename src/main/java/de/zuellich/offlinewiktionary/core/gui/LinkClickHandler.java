@@ -1,16 +1,17 @@
 package de.zuellich.offlinewiktionary.core.gui;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.Stack;
+import java.util.ArrayDeque;
 import java.util.function.Consumer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javax.annotation.Nullable;
 
 public class LinkClickHandler {
 
-  private String previousTerm = null;
+  @Nullable private String previousTerm = null;
 
-  private final Stack<String> history = new Stack<>();
+  private final ArrayDeque<String> history = new ArrayDeque<>();
 
   private Consumer<String> clickHandler = (_target) -> {};
   private final BooleanProperty historyEmptyProperty = new SimpleBooleanProperty(true);
@@ -33,20 +34,20 @@ public class LinkClickHandler {
   }
 
   public void historyPush(String item) {
-    if (history.empty() || !history.peek().equals(item)) {
+    if (history.isEmpty() || !history.peekFirst().equals(item)) {
       // For now we don't add duplicates to the history, but fire the click handler
-      history.push(item);
-      historyEmptyProperty.set(history.empty());
+      history.addFirst(item);
+      historyEmptyProperty.set(history.isEmpty());
     }
   }
 
   public void historyBack() {
-    if (history.empty()) {
+    if (history.isEmpty()) {
       return;
     }
 
-    this.handle(history.pop(), true);
-    historyEmptyProperty.set(history.empty());
+    this.handle(history.removeFirst(), true);
+    historyEmptyProperty.set(history.isEmpty());
   }
 
   @SuppressFBWarnings(

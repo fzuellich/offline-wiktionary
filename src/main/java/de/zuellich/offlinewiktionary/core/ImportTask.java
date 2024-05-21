@@ -7,7 +7,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.TreeSet;
+import java.util.Set;
 import javafx.concurrent.Task;
 
 public class ImportTask extends Task<Void> {
@@ -28,7 +28,7 @@ public class ImportTask extends Task<Void> {
     updateMessage(String.format("Parsing '%s' ...", targetIndex));
 
     final InputStream in = Files.newInputStream(targetIndex);
-    final TreeSet<SeekEntry> definitions = new PageIndexParser().parse(in);
+    final Set<SeekEntry> definitions = new PageIndexParser().parse(in);
     model.setDefinitions(definitions);
     updateMessage("Done!");
     return null;

@@ -13,9 +13,10 @@ public record SeekEntry(long bytesToSeek, int articleId, String title)
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SeekEntry wikiEntry = (SeekEntry) o;
-    return Objects.equals(title, wikiEntry.title);
+    if (!(o instanceof SeekEntry wikiEntry)) return false;
+    return Objects.equals(title, wikiEntry.title)
+        && bytesToSeek == wikiEntry.bytesToSeek
+        && articleId == wikiEntry.articleId;
   }
 
   @Override

@@ -38,6 +38,12 @@ public class WikiTextFlow extends TextFlow {
         case INDENT -> result.add(indentNode((IndentToken) token));
         case ITALIC -> result.addAll(italicNode((ItalicToken) token));
         case TEXT -> result.add(textNode((TextToken) token));
+        case NULL -> {
+          // Ensure we get notified by ErrorProne in case we are missing a case above
+          // but we don't need to do anything for NULL so we do a useless "continue" and
+          // everyone is happy.
+          continue;
+        }
       }
     }
     return result;
@@ -61,18 +67,16 @@ public class WikiTextFlow extends TextFlow {
   private Node linkNode(LinkToken token) {
     final Hyperlink hyperlink = new Hyperlink(token.label());
     hyperlink.setFont(getFont(12));
-    hyperlink.setOnAction(
-        v -> {
-          linkClickHandler.handle(token.target());
-        });
+    hyperlink.setOnAction(v -> linkClickHandler.handle(token.target()));
     return hyperlink;
   }
 
   private Node headingNode(HeadingToken token) {
-    if (token.value().getType() != MarkupTokenType.TEXT) {
-      return new Text();
-    }
     Text result = new Text();
+    if (token.value() == null || token.value().getType() != MarkupTokenType.TEXT) {
+      return result;
+    }
+
     result.setText(((TextToken) token.value()).value());
     result.setFont(getFont(32));
     // TODO have another TextFlow internally to display things like Macros etc?

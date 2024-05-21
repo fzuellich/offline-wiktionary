@@ -7,11 +7,12 @@ import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import javafx.beans.property.*;
 
 public class WiktionaryModel {
-  private TreeSet<SeekEntry> definitions;
+  private TreeSet<SeekEntry> definitions = new TreeSet<>();
   private WiktionaryReader wiktionaryReader;
   private final BooleanProperty isReady = new SimpleBooleanProperty(false);
   private final ReadOnlyObjectWrapper<Path> index = new ReadOnlyObjectWrapper<Path>(null);
@@ -27,7 +28,7 @@ public class WiktionaryModel {
     return isReady;
   }
 
-  public void setDefinitions(TreeSet<SeekEntry> definitions) {
+  public void setDefinitions(Set<SeekEntry> definitions) {
     this.definitions = new TreeSet<>(definitions);
     this.isReady.set(true);
   }

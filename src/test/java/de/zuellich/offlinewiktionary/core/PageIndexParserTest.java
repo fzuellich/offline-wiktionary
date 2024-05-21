@@ -28,7 +28,7 @@ class PageIndexParserTest {
     var input = new ByteArrayInputStream(temp.toByteArray());
     var importer = new PageIndexParser();
 
-    final TreeSet<SeekEntry> result = importer.parse(input);
+    final TreeSet<SeekEntry> result = new TreeSet<>(importer.parse(input));
     input.close();
 
     assertEquals(2, result.size());
