@@ -28,7 +28,7 @@ public class ImportTask extends Task<Void> {
     final InputStream in = Files.newInputStream(targetIndex);
     final Set<SeekEntry> definitions = new PageIndexParser().parse(in);
     model.setDefinitions(definitions);
-    updateMessage("Done!");
+    updateMessage(String.format("Viewing: '%s'", targetIndex));
     return null;
   }
 }

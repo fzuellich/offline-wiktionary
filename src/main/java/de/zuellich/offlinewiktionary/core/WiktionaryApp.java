@@ -10,12 +10,13 @@ import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import java.io.File;
 import java.util.List;
 import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -25,11 +26,15 @@ public class WiktionaryApp extends Application {
   private final TextField search;
   private final WikiTextFlow wikiTextFlow;
   private final LinkClickHandler linkClickHandler;
+  private final Label status;
 
   public WiktionaryApp() {
     search = new TextField();
     linkClickHandler = new LinkClickHandler();
     wikiTextFlow = new WikiTextFlow(linkClickHandler);
+    wikiTextFlow.setBackground(
+        new Background(new BackgroundFill(Color.IVORY, CornerRadii.EMPTY, Insets.EMPTY)));
+    status = new Label("No index opened");
   }
 
   private String searchHandler(String query) {
@@ -46,7 +51,7 @@ public class WiktionaryApp extends Application {
     wikiTextFlow.replaceChildren(parse);
   }
 
-  private Parent createContent(Stage primaryStage) {
+  private Pane getImportBar(Stage primaryStage) {
     final FileChooser archiveChooser = new FileChooser();
     archiveChooser.setTitle("Select an index to open...");
     archiveChooser
@@ -54,7 +59,13 @@ public class WiktionaryApp extends Application {
         .add(
             new FileChooser.ExtensionFilter(
                 "Wikimedia index", "*pages-articles-multistream-index.txt.bz2"));
-    final Label status = new Label("No index opened");
+    Button mirrorLink = new Button("Mirrors");
+    mirrorLink.setTooltip(new Tooltip("Find Wiktionary XML dumps online"));
+    mirrorLink.setOnAction(
+        _ev -> {
+          getHostServices().showDocument("https://dumps.wikimedia.org/mirrors.html");
+        });
+
     final Button anImport = new Button("Open index");
 
     anImport.setOnAction(
@@ -74,20 +85,51 @@ public class WiktionaryApp extends Application {
           new Thread(task).start();
         });
 
-    search.disableProperty().bind(model.isReadyProperty().not());
+    HBox result = new HBox(5, status, anImport, mirrorLink);
+    HBox.setHgrow(status, Priority.ALWAYS);
+    result.setAlignment(Pos.BASELINE_LEFT);
 
-    linkClickHandler.onClick(this::displayTerm);
+    return result;
+  }
 
-    search.setOnAction(value -> linkClickHandler.handle(search.getText()));
+  private Pane getSearchBar() {
     Button back = new Button("Back");
     back.disableProperty().bind(linkClickHandler.isHistoryEmptyProperty());
     back.setOnAction(value -> linkClickHandler.historyBack());
+
+    search.disableProperty().bind(model.isReadyProperty().not());
+    search.setOnAction(value -> linkClickHandler.handle(search.getText()));
 
     Button fireSearch = new Button("Search");
     fireSearch.disableProperty().bind(model.isReadyProperty().not());
     fireSearch.setOnAction(value -> linkClickHandler.handle(search.getText()));
 
-    return new VBox(status, anImport, search, back, fireSearch, wikiTextFlow);
+    HBox result = new HBox(5, back, search, fireSearch);
+    HBox.setHgrow(search, Priority.ALWAYS);
+
+    return result;
+  }
+
+  private Parent createContent(Stage primaryStage) {
+    linkClickHandler.onClick(this::displayTerm);
+
+    Pane importBar = getImportBar(primaryStage);
+    Pane searchBar = getSearchBar();
+
+    ScrollPane wikiTextScrollPane = new ScrollPane();
+    wikiTextScrollPane.setContent(wikiTextFlow);
+    // cause the text to wrap at the border instead of adding horizontal scrollbars
+    wikiTextScrollPane.setFitToWidth(true);
+    // ensure that the contained text element always stretches the full height, allowing for a
+    // uniform background
+    wikiTextScrollPane.setFitToHeight(true);
+    VBox result = new VBox(importBar, searchBar, wikiTextScrollPane);
+    VBox.setMargin(importBar, new Insets(5, 5, 10, 5));
+    VBox.setMargin(searchBar, new Insets(5));
+    VBox.setMargin(wikiTextScrollPane, new Insets(5));
+    VBox.setVgrow(wikiTextScrollPane, Priority.ALWAYS);
+
+    return result;
   }
 
   @Override
