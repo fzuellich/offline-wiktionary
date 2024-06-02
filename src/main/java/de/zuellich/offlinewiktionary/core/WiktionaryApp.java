@@ -4,11 +4,11 @@ import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
 import de.zuellich.offlinewiktionary.core.gui.LinkClickHandler;
 import de.zuellich.offlinewiktionary.core.gui.WikiTextFlow;
 import de.zuellich.offlinewiktionary.core.gui.WiktionaryModel;
-import de.zuellich.offlinewiktionary.core.markup.MarkupParser;
-import de.zuellich.offlinewiktionary.core.markup.MarkupToken;
+import de.zuellich.offlinewiktionary.core.markup.*;
 import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -37,18 +37,28 @@ public class WiktionaryApp extends Application {
     status = new Label("No index opened");
   }
 
-  private String searchHandler(String query) {
-    System.out.println("You searched for: " + query);
-    System.out.println("Result:\n" + model.lookupDefinition(query));
-    return model.lookupDefinition(query).map(WikiPage::text).orElse("Nothing found.");
-  }
-
   private void displayTerm(String term) {
     search.setText(term);
-    String result = searchHandler(term);
+    String result =
+        model.lookupDefinition(term).map(WikiPage::text).orElseGet(() -> findSuggestions(term));
     final MarkupParser parser = new MarkupParser();
     final List<MarkupToken> parse = parser.parse(result);
     wikiTextFlow.replaceChildren(parse);
+  }
+
+  private String findSuggestions(String term) {
+    Set<String> suggestions = model.findSuggestions(term);
+
+    StringBuilder builder = new StringBuilder();
+    builder.append("No results found.\n\n");
+    if (!suggestions.isEmpty()) {
+      builder.append("==Did you look for:==\n\n");
+      for (String entry : suggestions) {
+        builder.append(String.format("[[%s]]\n", entry));
+      }
+    }
+
+    return builder.toString();
   }
 
   private Pane getImportBar(Stage primaryStage) {
