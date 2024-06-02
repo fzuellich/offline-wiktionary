@@ -1,16 +1,21 @@
 package de.zuellich.offlinewiktionary.core.gui;
 
+import de.zuellich.offlinewiktionary.core.LevenshteinDistanceMatcher;
 import de.zuellich.offlinewiktionary.core.archive.SeekEntry;
 import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
 import de.zuellich.offlinewiktionary.core.resolution.AdjacentResolutionStrategy;
 import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import javafx.beans.property.*;
 
 public class WiktionaryModel {
+  /** Maximum number of suggestions to return. */
+  private static final int NO_OF_SUGGESTIONS = 5;
+
+  /** Only consider suggestions that are at most X changes from the original term. */
+  private static final int MAX_EDIT_DISTANCE = 1;
+
   private TreeSet<SeekEntry> definitions = new TreeSet<>();
   private WiktionaryReader wiktionaryReader;
   private final BooleanProperty isReady = new SimpleBooleanProperty(false);
@@ -55,5 +60,26 @@ public class WiktionaryModel {
     Path archiveFile = resolve.archive();
     index.set(resolve.index());
     wiktionaryReader = new WiktionaryReader(archiveFile);
+  }
+
+  /** Return a list of terms that are close to the given term. */
+  public Set<String> findSuggestions(String term) {
+    /*
+     * TODO Instead of calculating the distance for every term consider:
+     * a) aborting calculation once the maximum is reached
+     * b) use a trie data structure to avoid iterating all words
+     */
+    final Set<String> result = new HashSet<>(NO_OF_SUGGESTIONS);
+    final LevenshteinDistanceMatcher of = LevenshteinDistanceMatcher.of(term);
+    for (SeekEntry definition : definitions) {
+      if (of.distanceTo(definition.title()) <= MAX_EDIT_DISTANCE) {
+        result.add(definition.title());
+        if (result.size() == NO_OF_SUGGESTIONS) {
+          return result;
+        }
+      }
+    }
+
+    return result;
   }
 }
