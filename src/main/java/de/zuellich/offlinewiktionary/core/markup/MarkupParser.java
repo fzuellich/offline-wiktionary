@@ -29,9 +29,9 @@ public class MarkupParser {
 
   private final ArrayDeque<Integer> snapshot = new ArrayDeque<>();
 
-  private final List<Supplier<Optional<? extends MarkupToken>>> linkTokenParserPriority;
-  private final List<Supplier<Optional<? extends MarkupToken>>> italicTokenParserPriority;
-  private final List<Supplier<Optional<? extends MarkupToken>>> textTokenParserPriority;
+  private final List<Supplier<Optional<? extends MarkupToken>>> linkLabelTokenParsers;
+  private final List<Supplier<Optional<? extends MarkupToken>>> italicContentTokenParsers;
+  private final List<Supplier<Optional<? extends MarkupToken>>> textContentTokenParsers;
   private final List<Supplier<Optional<? extends MarkupToken>>> tokenParserPriority;
 
   /**
@@ -47,8 +47,8 @@ public class MarkupParser {
   }
 
   public MarkupParser() {
-    linkTokenParserPriority = List.of(this::parseItalicToken, this::parseText);
-    italicTokenParserPriority = List.of(this::parseLink, this::parseText);
+    linkLabelTokenParsers = List.of(this::parseItalicToken, this::parseText);
+    italicContentTokenParsers = List.of(this::parseLink, this::parseText);
     tokenParserPriority =
         List.of(
             this::parseIndent,
@@ -56,7 +56,7 @@ public class MarkupParser {
             this::parseItalicToken,
             this::parseLink,
             this::parseText);
-    textTokenParserPriority = List.of(this::parseItalicToken, this::parseLink, this::parseText);
+    textContentTokenParsers = List.of(this::parseItalicToken, this::parseLink, this::parseText);
   }
 
   /**
@@ -215,48 +215,6 @@ public class MarkupParser {
     return value.toString();
   }
 
-  private List<MarkupToken> parseTextContent() {
-    final List<MarkupToken> result = new ArrayList<>();
-    while (hasNextChar()) {
-      final Optional<? extends MarkupToken> possibleNextToken = nextTextContentToken();
-      if (possibleNextToken.isEmpty()) {
-        break;
-      }
-
-      result.add(possibleNextToken.get());
-    }
-
-    return result;
-  }
-
-  private List<MarkupToken> parseItalicContent() {
-    final List<MarkupToken> result = new ArrayList<>();
-    while (hasNextChar()) {
-      final Optional<? extends MarkupToken> possibleNextToken = nextItalicContentToken();
-      if (possibleNextToken.isEmpty()) {
-        break;
-      }
-
-      result.add(possibleNextToken.get());
-    }
-
-    return result;
-  }
-
-  private List<MarkupToken> parseLinkContent() {
-    final List<MarkupToken> result = new ArrayList<>();
-    while (hasNextChar()) {
-      final Optional<? extends MarkupToken> possibleNextToken = nextLinkContentToken();
-      if (possibleNextToken.isEmpty()) {
-        break;
-      }
-
-      result.add(possibleNextToken.get());
-    }
-
-    return result;
-  }
-
   private Optional<LinkToken> parseLink() {
     snapshotPointer();
     try {
@@ -265,7 +223,7 @@ public class MarkupParser {
       List<MarkupToken> label;
       char next = nextChar();
       if (next == '|') {
-        label = parseLinkContent(); // Italics|Text
+        label = collectTokens(linkLabelTokenParsers);
         consumeInOrder(']', ']');
       } else if (next == ']') {
         // Support for the short form for links: [[Link]]
@@ -315,7 +273,7 @@ public class MarkupParser {
       return Optional.empty();
     }
 
-    List<MarkupToken> content = parseTextContent();
+    List<MarkupToken> content = collectTokens(textContentTokenParsers);
 
     int requiredLevel = level;
     while (hasNextChar() && nextChar() == '=') {
@@ -343,7 +301,7 @@ public class MarkupParser {
     snapshotPointer();
     try {
       consumeInOrder('\'', '\'');
-      List<MarkupToken> value = parseTextContent();
+      List<MarkupToken> value = collectTokens(italicContentTokenParsers);
       ;
       if (value.isEmpty()) {
         /*
@@ -371,62 +329,49 @@ public class MarkupParser {
     }
   }
 
-  private Optional<? extends MarkupToken> nextLinkContentToken() {
-    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : linkTokenParserPriority) {
-      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
-      if (nextToken.isPresent()) {
-        return nextToken;
-      }
-    }
-
-    return Optional.empty();
-  }
-
-  private Optional<? extends MarkupToken> nextItalicContentToken() {
-    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : italicTokenParserPriority) {
-      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
-      if (nextToken.isPresent()) {
-        return nextToken;
-      }
-    }
-
-    return Optional.empty();
-  }
-
-  private Optional<? extends MarkupToken> nextTextContentToken() {
-    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : textTokenParserPriority) {
-      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
-      if (nextToken.isPresent()) {
-        return nextToken;
-      }
-    }
-
-    return Optional.empty();
-  }
-
-  private Optional<? extends MarkupToken> nextToken() {
-    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : tokenParserPriority) {
-      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
-      if (nextToken.isPresent()) {
-        return nextToken;
-      }
-    }
-
-    return Optional.empty();
-  }
-
   public List<MarkupToken> parse(String input) {
     this.input = input.toCharArray();
     this.pointer = -1;
     this.snapshot.clear();
     ArrayList<MarkupToken> tokens = new ArrayList<>();
     while (hasNextChar()) {
-      final Optional<? extends MarkupToken> possibleNextToken = nextToken();
+      final Optional<? extends MarkupToken> possibleNextToken = tryNextToken(tokenParserPriority);
       final MarkupToken markupToken =
           possibleNextToken.orElseThrow(
               () -> new IllegalStateException("No token produced. Should never happen."));
       tokens.add(markupToken);
     }
     return tokens;
+  }
+
+  /** Attempt to parse the next token using the supplied candidates in iteration order. */
+  private Optional<? extends MarkupToken> tryNextToken(
+      List<Supplier<Optional<? extends MarkupToken>>> candidates) {
+    for (Supplier<Optional<? extends MarkupToken>> candidate : candidates) {
+      Optional<? extends MarkupToken> nextToken = candidate.get();
+      if (nextToken.isPresent()) {
+        return nextToken;
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Given a list of parsers, try to parse a token until end of input. This may lead to an endless
+   * loop in case of malformed input.
+   */
+  private List<MarkupToken> collectTokens(List<Supplier<Optional<? extends MarkupToken>>> parsers) {
+    final List<MarkupToken> result = new ArrayList<>();
+    while (hasNextChar()) {
+      final Optional<? extends MarkupToken> possibleNextToken = tryNextToken(parsers);
+      if (possibleNextToken.isEmpty()) {
+        break;
+      }
+
+      result.add(possibleNextToken.get());
+    }
+
+    return result;
   }
 }
