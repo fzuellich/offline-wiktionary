@@ -310,4 +310,44 @@ public class Fixtures {
 
             {{Ähnlichkeiten 1|[[Friedel]], [[Frieder]], [[Friedhof]], [[frieren]], [[Friesen]]|Anagramme=[[eifernd]], [[erfinde]], [[feiernd]], [[fiedern]], [[fierend]], [[freiend]], [[reifend]], [[riefend]]}}
             """;
+
+  public static final String QUARKS_PAGE_MARKUP =
+      """
+            == Quarks ({{Sprache|Deutsch}}) ==
+            === {{Wortart|Deklinierte Form|Deutsch}}, ''Milchprodukt, Unsinn'' ===
+
+            {{Nebenformen}}
+            :[[Quarkes]]
+
+            {{Worttrennung}}
+            :Quarks
+
+            {{Aussprache}}
+            :{{IPA}} {{Lautschrift|kvaʁks}}
+            :{{Hörbeispiele}} {{Audio|De-Quarks.ogg}}
+            :{{Reime}} {{Reim|aʁks|Deutsch}}
+
+            {{Grammatische Merkmale}}
+            *Genitiv Singular des Substantivs '''[[Quark]]'''
+
+            {{Grundformverweis Dekl|Quark}}
+
+            === {{Wortart|Deklinierte Form|Deutsch}}, ''Physik'' ===
+
+            {{Worttrennung}}
+            :Quarks
+
+            {{Aussprache}}
+            :{{IPA}} {{Lautschrift|kvoːɐ̯ks}}, {{Lautschrift|kvɔʁks}}
+            :{{Hörbeispiele}} {{Audio|}}, {{Audio|De-Quarks2.ogg}}
+            :{{Reime}} {{Reim|ɔʁks|Deutsch}}
+
+            {{Grammatische Merkmale}}
+            *Genitiv Singular des Substantivs '''[[Quark]]'''
+            *Nominativ Plural des Substantivs '''[[Quark]]'''
+            *Genitiv Plural des Substantivs '''[[Quark]]'''
+            *Dativ Plural des Substantivs '''[[Quark]]'''
+            *Akkusativ Plural des Substantivs '''[[Quark]]'''
+
+            {{Grundformverweis Dekl|Quark}}""";
 }

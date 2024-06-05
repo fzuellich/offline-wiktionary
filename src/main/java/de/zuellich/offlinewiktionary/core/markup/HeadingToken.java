@@ -1,8 +1,8 @@
 package de.zuellich.offlinewiktionary.core.markup;
 
-import javax.annotation.Nullable;
+import java.util.List;
 
-public record HeadingToken(int level, @Nullable MarkupToken value) implements MarkupToken {
+public record HeadingToken(int level, List<MarkupToken> value) implements MarkupToken {
   @Override
   public MarkupTokenType getType() {
     return MarkupTokenType.HEADING;

@@ -52,7 +52,7 @@ public class MarkupParser {
             this::parseItalicToken,
             this::parseLink,
             this::parseText);
-    textTokenParserPriority = List.of(this::parseLink, this::parseText);
+    textTokenParserPriority = List.of(this::parseItalicToken, this::parseLink, this::parseText);
   }
 
   /**
@@ -278,7 +278,7 @@ public class MarkupParser {
       return Optional.empty();
     }
 
-    Optional<TextToken> contentToken = parseText();
+    List<MarkupToken> content = parseTextContent();
 
     int requiredLevel = level;
     while (hasNextChar() && nextChar() == '=') {
@@ -291,7 +291,7 @@ public class MarkupParser {
     }
 
     eraseSnapshot();
-    return Optional.of(new HeadingToken(level, contentToken.orElse(null)));
+    return Optional.of(new HeadingToken(level, content));
   }
 
   private Optional<IndentToken> parseIndent() {
@@ -307,6 +307,24 @@ public class MarkupParser {
     try {
       consumeInOrder('\'', '\'');
       List<MarkupToken> value = parseTextContent();
+      ;
+      if (value.isEmpty()) {
+        /*
+         * We don't support empty italics (i.e. ''''), instead we probably encountered the closing sequence for italics
+         * and want to return control to the upper stages. Otherwise, we might also advance the pointer too much
+         * when calling `consumeInOrder`. Maybe we have to refine this check by adding something like:
+         * `value.isEmpty() && hasNoMoreCharacters()`?
+         */
+        throw new MatchException("Found no content for italics block", null);
+      }
+      if (!hasNextChar()) {
+        /*
+         * We might end up here, after parsing italics as text content for italics. However, we'll never find a closing
+         * sequence and instead see an exception for advancing the pointer to far. We have to give control back to the
+         * italics parent.
+         */
+        throw new MatchException("No more characters to find closing sequence for italics", null);
+      }
       consumeInOrder('\'', '\'');
       eraseSnapshot();
       return Optional.of(new ItalicToken(value));

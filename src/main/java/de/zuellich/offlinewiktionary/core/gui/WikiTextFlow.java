@@ -13,8 +13,12 @@ import javafx.scene.text.TextFlow;
 /** Use JavaFX {@link javafx.scene.text.TextFlow} to display markdown. */
 public class WikiTextFlow extends TextFlow {
 
+  private static final int DEFAULT_FONT_SIZE = 12;
+  private static final int HEADING_FONT_SIZE = 32;
+
   private final LinkClickHandler linkClickHandler;
   private boolean italicsEnabled = false;
+  private int fontSize = DEFAULT_FONT_SIZE;
 
   public WikiTextFlow(LinkClickHandler linkClickHandler) {
     this.linkClickHandler = linkClickHandler;
@@ -32,7 +36,7 @@ public class WikiTextFlow extends TextFlow {
     for (MarkupToken token : tokens) {
       switch (token.getType()) {
         case LINK -> result.add(linkNode((LinkToken) token));
-        case HEADING -> result.add(headingNode((HeadingToken) token));
+        case HEADING -> result.addAll(headingNode((HeadingToken) token));
         case INDENT -> result.add(indentNode((IndentToken) token));
         case ITALIC -> result.addAll(italicNode((ItalicToken) token));
         case TEXT -> result.add(textNode((TextToken) token));
@@ -47,12 +51,12 @@ public class WikiTextFlow extends TextFlow {
     return result;
   }
 
-  private Font getFont(double size) {
+  private Font getFont() {
     if (!italicsEnabled) {
-      return Font.font("System", size);
+      return Font.font("System", fontSize);
     }
 
-    return Font.font("System", FontPosture.ITALIC, size);
+    return Font.font("System", FontPosture.ITALIC, fontSize);
   }
 
   private Collection<Node> italicNode(ItalicToken token) {
@@ -64,27 +68,23 @@ public class WikiTextFlow extends TextFlow {
 
   private Node linkNode(LinkToken token) {
     final Hyperlink hyperlink = new Hyperlink(token.label());
-    hyperlink.setFont(getFont(12));
+    hyperlink.setFont(getFont());
     hyperlink.setOnAction(v -> linkClickHandler.handle(token.target()));
     return hyperlink;
   }
 
-  private Node headingNode(HeadingToken token) {
-    Text result = new Text();
-    if (token.value() == null || token.value().getType() != MarkupTokenType.TEXT) {
-      return result;
-    }
-
-    result.setText(((TextToken) token.value()).value());
-    result.setFont(getFont(32));
-    // TODO have another TextFlow internally to display things like Macros etc?
-    return result;
+  private Collection<Node> headingNode(HeadingToken token) {
+    int prevSize = fontSize;
+    fontSize = HEADING_FONT_SIZE;
+    final Collection<Node> nodes = tokensToChildren(token.value());
+    fontSize = prevSize;
+    return nodes;
   }
 
   private Text textNode(TextToken token) {
     Text result = new Text();
     result.setText(token.value());
-    result.setFont(getFont(12));
+    result.setFont(getFont());
     return result;
   }
 
