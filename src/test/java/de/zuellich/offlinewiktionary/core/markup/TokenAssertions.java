@@ -15,40 +15,6 @@ public class TokenAssertions {
     }
   }
 
-  static void assertHeadline(MarkupToken token, int requiredLevel) {
-    assertMatchingType(MarkupTokenType.HEADING, token);
-
-    HeadingToken headingToken = (HeadingToken) token;
-    if (headingToken.level() != requiredLevel) {
-      fail(
-          String.format(
-              "Expected heading with level %d but actual level is %d",
-              requiredLevel, headingToken.level()));
-    }
-  }
-
-  static void assertHeadline(MarkupToken token, int requiredLevel, String content) {
-    assertMatchingType(MarkupTokenType.HEADING, token);
-
-    final HeadingToken headingToken = (HeadingToken) token;
-    if (headingToken.level() != requiredLevel) {
-      fail(
-          String.format(
-              "Expected heading with level %d but actual level is %d",
-              requiredLevel, headingToken.level()));
-    }
-
-    final MarkupToken value = headingToken.value();
-    if (value.getType() != MarkupTokenType.TEXT) {
-      fail(String.format("Expected heading value type to be 'TEXT' but is '%s'", value.getType()));
-    }
-
-    final TextToken textToken = (TextToken) value;
-    if (!textToken.value().equals(content)) {
-      fail(String.format("Expected heading value '%s' but got '%s'", content, textToken.value()));
-    }
-  }
-
   public static void assertText(MarkupToken token, String expectedText) {
     assertMatchingType(MarkupTokenType.TEXT, token);
 
@@ -65,8 +31,9 @@ public class TokenAssertions {
   public static void assertLink(MarkupToken token, String expectedLabel, String expectedTarget) {
     assertMatchingType(MarkupTokenType.LINK, token);
     final LinkToken linkToken = (LinkToken) token;
-    if (!linkToken.label().equals(expectedLabel)) {
-      fail(String.format("Expected label '%s' but got '%s'", expectedLabel, linkToken.label()));
+    final String plainTextLabel = MarkupToken.toPlainText(linkToken.labelValue());
+    if (!plainTextLabel.equals(expectedLabel)) {
+      fail(String.format("Expected label '%s' but got '%s'", expectedLabel, plainTextLabel));
     }
     if (!linkToken.target().equals(expectedTarget)) {
       fail(String.format("Expected target '%s' but got '%s'", expectedTarget, linkToken.target()));
@@ -95,6 +62,17 @@ public class TokenAssertions {
     assertTokens(tokens, matchers);
   }
 
+  /** Convenience method for cases where you only need to test a single token. */
+  public static void assertTokensStrict(
+      final List<MarkupToken> tokens, final Consumer<MarkupToken> matcher) {
+    assertTokensStrict(tokens, List.of(matcher));
+  }
+
+  /** Convenience method for cases where you only need to test a single token. */
+  public static void assertToken(final MarkupToken token, final Consumer<MarkupToken> matcher) {
+    assertTokensStrict(List.of(token), List.of(matcher));
+  }
+
   public static Consumer<MarkupToken> text(String text) {
     return (MarkupToken token) -> {
       assertText(token, text);
@@ -104,6 +82,18 @@ public class TokenAssertions {
   public static Consumer<MarkupToken> link(String expectedTextAndLabel) {
     return (MarkupToken token) -> {
       assertLink(token, expectedTextAndLabel);
+    };
+  }
+
+  public static Consumer<MarkupToken> link(
+      String expectedTarget, List<Consumer<MarkupToken>> expectedLabel) {
+    return (MarkupToken token) -> {
+      assertMatchingType(MarkupTokenType.LINK, token);
+      LinkToken link = (LinkToken) token;
+      if (!expectedTarget.equals(link.target())) {
+        fail(String.format("Expected target '%s' but got '%s'", expectedTarget, link.target()));
+      }
+      assertTokensStrict(link.labelValue(), expectedLabel);
     };
   }
 
@@ -118,6 +108,38 @@ public class TokenAssertions {
       assertMatchingType(MarkupTokenType.ITALIC, token);
       assertTokensStrict(((ItalicToken) token).value(), inner);
     };
+  }
+
+  public static Consumer<MarkupToken> italic(Consumer<MarkupToken> content) {
+    return (MarkupToken token) -> {
+      assertMatchingType(MarkupTokenType.ITALIC, token);
+      assertTokensStrict(((ItalicToken) token).value(), List.of(content));
+    };
+  }
+
+  /**
+   * @param expectedLevel Check that the heading has the specified level
+   * @param expectedContent Strictly match that the heading content matches the provided matchers.
+   */
+  public static Consumer<MarkupToken> heading(
+      int expectedLevel, List<Consumer<MarkupToken>> expectedContent) {
+    return (MarkupToken token) -> {
+      assertMatchingType(MarkupTokenType.HEADING, token);
+      HeadingToken heading = (HeadingToken) token;
+      if (heading.level() != expectedLevel) {
+        fail(
+            String.format(
+                "Expected heading to have level %s, but got %s.", expectedLevel, heading.level()));
+      }
+
+      assertTokensStrict(heading.value(), expectedContent);
+    };
+  }
+
+  /** Convenience method for testing when you only need to supply a single content token matcher. */
+  public static Consumer<MarkupToken> heading(
+      int expectedLevel, Consumer<MarkupToken> expectedContent) {
+    return heading(expectedLevel, List.of(expectedContent));
   }
 
   /**

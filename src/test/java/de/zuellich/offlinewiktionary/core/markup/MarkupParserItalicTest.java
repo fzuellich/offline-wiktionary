@@ -25,4 +25,24 @@ public class MarkupParserItalicTest {
     result = MarkupParser.parseString("This is ''[[more]]''!");
     assertTokensStrict(result, List.of(text("This is "), italic(List.of(link("more"))), text("!")));
   }
+
+  @Test
+  public void canParseMultiline() {
+    final List<MarkupToken> markupTokens =
+        MarkupParser.parseString(
+            """
+            This line starts here ''italics''
+            Then we continue with
+            ''more'' italics.""");
+
+    assertTokens(
+        markupTokens,
+        List.of(
+            text("This line starts here "),
+            italic(text("italics")),
+            text("\n"),
+            text("Then we continue with\n"),
+            italic(text("more")),
+            text(" italics.")));
+  }
 }

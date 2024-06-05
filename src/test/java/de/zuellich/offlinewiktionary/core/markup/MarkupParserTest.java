@@ -24,11 +24,11 @@ class MarkupParserTest {
     List<MarkupToken> result = parser.parse(document);
     assertEquals(5, result.size());
     assertText(result.get(0), "{{SomeMacro}}\n");
-    assertHeadline(result.get(1), 2, "the heading");
+    assertToken(result.get(1), heading(2, text("the heading")));
     assertText(result.get(2), """
                 a paragraph
                 """);
-    assertHeadline(result.get(3), 3, "another heading");
+    assertToken(result.get(3), heading(3, text("another heading")));
     assertText(result.get(4), "{{Macro|With|Parameters}}");
   }
 
@@ -63,6 +63,13 @@ class MarkupParserTest {
     assertIndent(parse.get(1), 1);
     assertLink(parse.get(2), "Friede", "Friede");
     assertText(parse.get(3), "\n");
+  }
+
+  /** Previously broke because of the second heading mixing italics */
+  @Test
+  public void regressionTestParseQuarksPage() {
+    final List<MarkupToken> markupTokens = MarkupParser.parseString(Fixtures.QUARKS_PAGE_MARKUP);
+    assertTrue(markupTokens.size() > 0);
   }
 
   /**
