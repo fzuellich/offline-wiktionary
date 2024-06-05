@@ -29,6 +29,7 @@ public class MarkupParser {
 
   private final ArrayDeque<Integer> snapshot = new ArrayDeque<>();
 
+  private final List<Supplier<Optional<? extends MarkupToken>>> italicTokenParserPriority;
   private final List<Supplier<Optional<? extends MarkupToken>>> textTokenParserPriority;
   private final List<Supplier<Optional<? extends MarkupToken>>> tokenParserPriority;
 
@@ -45,6 +46,7 @@ public class MarkupParser {
   }
 
   public MarkupParser() {
+    italicTokenParserPriority = List.of(this::parseLink, this::parseText);
     tokenParserPriority =
         List.of(
             this::parseIndent,
@@ -225,6 +227,20 @@ public class MarkupParser {
     return result;
   }
 
+  private List<MarkupToken> parseItalicContent() {
+    final List<MarkupToken> result = new ArrayList<>();
+    while (hasNextChar()) {
+      final Optional<? extends MarkupToken> possibleNextToken = nextItalicContentToken();
+      if (possibleNextToken.isEmpty()) {
+        break;
+      }
+
+      result.add(possibleNextToken.get());
+    }
+
+    return result;
+  }
+
   private Optional<LinkToken> parseLink() {
     snapshotPointer();
     try {
@@ -332,6 +348,17 @@ public class MarkupParser {
       restorePointer();
       return Optional.empty();
     }
+  }
+
+  private Optional<? extends MarkupToken> nextItalicContentToken() {
+    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : italicTokenParserPriority) {
+      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
+      if (nextToken.isPresent()) {
+        return nextToken;
+      }
+    }
+
+    return Optional.empty();
   }
 
   private Optional<? extends MarkupToken> nextTextContentToken() {
