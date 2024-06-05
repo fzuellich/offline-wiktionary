@@ -1,7 +1,6 @@
 package de.zuellich.offlinewiktionary.core.markup;
 
-import static de.zuellich.offlinewiktionary.core.markup.TokenAssertions.assertLink;
-import static de.zuellich.offlinewiktionary.core.markup.TokenAssertions.assertText;
+import static de.zuellich.offlinewiktionary.core.markup.TokenAssertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
@@ -64,5 +63,19 @@ public class MarkupParserLinkTest {
     assertText(result.get(0), "{{Macro|");
     assertLink(result.get(1), "Label", "Link");
     assertText(result.get(2), "}}");
+  }
+
+  @Test
+  public void canUseItalicsInLabel() {
+    List<MarkupToken> result = MarkupParser.parseString("[[Link|Text with ''italic'']]");
+    assertTokensStrict(
+        result, List.of(link("Link", List.of(text("Text with "), italic(text("italic"))))));
+
+    result = MarkupParser.parseString("''Italic [[Link|more ''italics'']]''");
+    assertTokensStrict(
+        result,
+        italic(
+            List.of(
+                text("Italic "), link("Link", List.of(text("more "), italic(text("italics")))))));
   }
 }

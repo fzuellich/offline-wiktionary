@@ -29,6 +29,7 @@ public class MarkupParser {
 
   private final ArrayDeque<Integer> snapshot = new ArrayDeque<>();
 
+  private final List<Supplier<Optional<? extends MarkupToken>>> linkTokenParserPriority;
   private final List<Supplier<Optional<? extends MarkupToken>>> italicTokenParserPriority;
   private final List<Supplier<Optional<? extends MarkupToken>>> textTokenParserPriority;
   private final List<Supplier<Optional<? extends MarkupToken>>> tokenParserPriority;
@@ -46,6 +47,7 @@ public class MarkupParser {
   }
 
   public MarkupParser() {
+    linkTokenParserPriority = List.of(this::parseItalicToken, this::parseText);
     italicTokenParserPriority = List.of(this::parseLink, this::parseText);
     tokenParserPriority =
         List.of(
@@ -241,32 +243,51 @@ public class MarkupParser {
     return result;
   }
 
+  private List<MarkupToken> parseLinkContent() {
+    final List<MarkupToken> result = new ArrayList<>();
+    while (hasNextChar()) {
+      final Optional<? extends MarkupToken> possibleNextToken = nextLinkContentToken();
+      if (possibleNextToken.isEmpty()) {
+        break;
+      }
+
+      result.add(possibleNextToken.get());
+    }
+
+    return result;
+  }
+
   private Optional<LinkToken> parseLink() {
     snapshotPointer();
     try {
       consumeInOrder('[', '[');
       final String link = readTerminatedBy('|', ']');
-      String label;
+      List<MarkupToken> label;
       char next = nextChar();
       if (next == '|') {
-        label = readTerminatedBy(']');
+        label = parseLinkContent(); // Italics|Text
         consumeInOrder(']', ']');
       } else if (next == ']') {
+        // Support for the short form for links: [[Link]]
         consumeInOrder(']');
-        label = link;
+        String labelText = link;
+        /*
+         * We also want to support the special short form [[Link]]s -> label: Links, however to keep it simple we
+         * don't support things like [[Link|Text]]s -> label: Texts. (Possible by just adding another token, but makes
+         * it slightly messier.)
+         *
+         * Important: peekNextChar() has to be called after hasNextChar() otherwise an ArrayIndexOutOfBounds
+         * is thrown if there is no next char. We could think about working with \u0000 here, but that
+         * might get tricky in some circumstances.
+         */
+        if (hasNextChar() && !WORD_LINK_BOUNDARIES.contains(Character.getType(peekNextChar()))) {
+          String wordEnding = readTerminatedBy(' ');
+          labelText = labelText + wordEnding;
+        }
+        label = List.of(new TextToken(labelText));
       } else {
         throw new MatchException(
             String.format("Expected either '|' or ']' but got '%s'.", next), null);
-      }
-
-      // Important: peekNextChar() has to be called after hasNextChar() otherwise an
-      // ArrayIndexOutOfBounds
-      // is thrown if there is no next char. We could think about working with \u0000 here, but that
-      // might get
-      // tricky in some circumstances.
-      if (hasNextChar() && !WORD_LINK_BOUNDARIES.contains(Character.getType(peekNextChar()))) {
-        String wordEnding = readTerminatedBy(' ');
-        label = label + wordEnding;
       }
 
       eraseSnapshot();
@@ -348,6 +369,17 @@ public class MarkupParser {
       restorePointer();
       return Optional.empty();
     }
+  }
+
+  private Optional<? extends MarkupToken> nextLinkContentToken() {
+    for (Supplier<Optional<? extends MarkupToken>> tokenCandidate : linkTokenParserPriority) {
+      Optional<? extends MarkupToken> nextToken = tokenCandidate.get();
+      if (nextToken.isPresent()) {
+        return nextToken;
+      }
+    }
+
+    return Optional.empty();
   }
 
   private Optional<? extends MarkupToken> nextItalicContentToken() {

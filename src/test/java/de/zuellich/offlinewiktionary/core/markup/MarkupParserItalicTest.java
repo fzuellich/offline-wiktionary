@@ -45,6 +45,4 @@ public class MarkupParserItalicTest {
             italic(text("more")),
             text(" italics.")));
   }
-
-  // [[Link|Text with ''italic'']], ''Italic [[Link]]'', ''Italic [[Link|more ''italics'']]''
 }

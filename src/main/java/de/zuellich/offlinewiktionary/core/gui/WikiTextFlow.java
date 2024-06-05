@@ -66,19 +66,23 @@ public class WikiTextFlow extends TextFlow {
     return nodes;
   }
 
-  private Node linkNode(LinkToken token) {
-    final Hyperlink hyperlink = new Hyperlink(token.label());
-    hyperlink.setFont(getFont());
-    hyperlink.setOnAction(v -> linkClickHandler.handle(token.target()));
-    return hyperlink;
-  }
-
   private Collection<Node> headingNode(HeadingToken token) {
     int prevSize = fontSize;
     fontSize = HEADING_FONT_SIZE;
     final Collection<Node> nodes = tokensToChildren(token.value());
     fontSize = prevSize;
     return nodes;
+  }
+
+  private Node linkNode(LinkToken token) {
+    // Maybe later we can think about either introducing our own Hyperlink that supports partial
+    // italics, or we can think of putting together multiple Hyperlinks to make it appear as one,
+    // but for now we only support regular String labels
+    String label = MarkupToken.toPlainText(token.labelValue());
+    final Hyperlink hyperlink = new Hyperlink(label);
+    hyperlink.setFont(getFont());
+    hyperlink.setOnAction(v -> linkClickHandler.handle(token.target()));
+    return hyperlink;
   }
 
   private Text textNode(TextToken token) {

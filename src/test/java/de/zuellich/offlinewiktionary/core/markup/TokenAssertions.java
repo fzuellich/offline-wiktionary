@@ -31,8 +31,9 @@ public class TokenAssertions {
   public static void assertLink(MarkupToken token, String expectedLabel, String expectedTarget) {
     assertMatchingType(MarkupTokenType.LINK, token);
     final LinkToken linkToken = (LinkToken) token;
-    if (!linkToken.label().equals(expectedLabel)) {
-      fail(String.format("Expected label '%s' but got '%s'", expectedLabel, linkToken.label()));
+    final String plainTextLabel = MarkupToken.toPlainText(linkToken.labelValue());
+    if (!plainTextLabel.equals(expectedLabel)) {
+      fail(String.format("Expected label '%s' but got '%s'", expectedLabel, plainTextLabel));
     }
     if (!linkToken.target().equals(expectedTarget)) {
       fail(String.format("Expected target '%s' but got '%s'", expectedTarget, linkToken.target()));
@@ -81,6 +82,18 @@ public class TokenAssertions {
   public static Consumer<MarkupToken> link(String expectedTextAndLabel) {
     return (MarkupToken token) -> {
       assertLink(token, expectedTextAndLabel);
+    };
+  }
+
+  public static Consumer<MarkupToken> link(
+      String expectedTarget, List<Consumer<MarkupToken>> expectedLabel) {
+    return (MarkupToken token) -> {
+      assertMatchingType(MarkupTokenType.LINK, token);
+      LinkToken link = (LinkToken) token;
+      if (!expectedTarget.equals(link.target())) {
+        fail(String.format("Expected target '%s' but got '%s'", expectedTarget, link.target()));
+      }
+      assertTokensStrict(link.labelValue(), expectedLabel);
     };
   }
 
