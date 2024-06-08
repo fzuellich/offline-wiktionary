@@ -72,6 +72,13 @@ class MarkupParserTest {
     assertTrue(markupTokens.size() > 0);
   }
 
+  /** Previously broke because of the mixture of italics and word-ending links */
+  @Test
+  public void regressionTestParseFriedePage() {
+    final List<MarkupToken> markupTokens = MarkupParser.parseString(Fixtures.FRIEDE_PAGE_MARKUP);
+    assertTrue(markupTokens.size() > 0);
+  }
+
   /**
    * Previously there were circumstance where our text parser generated empty text tokens, that
    * would prevent some loops from terminating. Avoid this.
@@ -96,7 +103,9 @@ class MarkupParserTest {
         });
   }
 
+  // @TODO
   public void testVariousOverflowAndUnderflowSituations() {}
 
+  // @TODO
   public void testVariousHalfOpenHalfClosedConstellations() {}
 }

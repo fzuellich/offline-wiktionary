@@ -86,6 +86,11 @@ public class TokenAssertions {
   }
 
   public static Consumer<MarkupToken> link(
+      String expectedTarget, Consumer<MarkupToken> expectedLabel) {
+    return link(expectedTarget, List.of(expectedLabel));
+  }
+
+  public static Consumer<MarkupToken> link(
       String expectedTarget, List<Consumer<MarkupToken>> expectedLabel) {
     return (MarkupToken token) -> {
       assertMatchingType(MarkupTokenType.LINK, token);
@@ -156,8 +161,7 @@ public class TokenAssertions {
               tokens.size(), matchers.size()));
     }
 
-    final int min = Math.min(matchers.size(), tokens.size());
-    for (int i = 0; i < min; i++) {
+    for (int i = 0; i < matchers.size(); i++) {
       final MarkupToken token = tokens.get(i);
       final Consumer<MarkupToken> matcher = matchers.get(i);
       matcher.accept(token);

@@ -215,6 +215,25 @@ public class MarkupParser {
     return value.toString();
   }
 
+  private String readTerminatedByType(Set<Integer> types) {
+    if (types.size() == 0) {
+      throw new IllegalArgumentException("Need to supply at least one Character type!");
+    }
+
+    StringBuilder value = new StringBuilder();
+    while (hasNextChar()) {
+      char c = nextChar();
+      int type = Character.getType(c);
+      if (types.contains(type)) {
+        pointer--;
+        break;
+      }
+      value.append(c);
+    }
+
+    return value.toString();
+  }
+
   private Optional<LinkToken> parseLink() {
     snapshotPointer();
     try {
@@ -239,7 +258,8 @@ public class MarkupParser {
          * might get tricky in some circumstances.
          */
         if (hasNextChar() && !WORD_LINK_BOUNDARIES.contains(Character.getType(peekNextChar()))) {
-          String wordEnding = readTerminatedBy(' ');
+          //          String wordEnding = readTerminatedByType( WORD_LINK_BOUNDARIES);
+          String wordEnding = readTerminatedByType(WORD_LINK_BOUNDARIES);
           labelText = labelText + wordEnding;
         }
         label = List.of(new TextToken(labelText));

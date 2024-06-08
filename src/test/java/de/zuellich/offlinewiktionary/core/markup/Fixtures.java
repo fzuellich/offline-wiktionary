@@ -311,6 +311,7 @@ public class Fixtures {
             {{Ähnlichkeiten 1|[[Friedel]], [[Frieder]], [[Friedhof]], [[frieren]], [[Friesen]]|Anagramme=[[eifernd]], [[erfinde]], [[feiernd]], [[fiedern]], [[fierend]], [[freiend]], [[reifend]], [[riefend]]}}
             """;
 
+  // From: https://de.wiktionary.org/wiki/Spezial:Exportieren/Quarks
   public static final String QUARKS_PAGE_MARKUP =
       """
             == Quarks ({{Sprache|Deutsch}}) ==
@@ -350,4 +351,130 @@ public class Fixtures {
             *Akkusativ Plural des Substantivs '''[[Quark]]'''
 
             {{Grundformverweis Dekl|Quark}}""";
+
+  // From: https://de.wiktionary.org/wiki/Spezial:Exportieren/Friede
+  public static final String FRIEDE_PAGE_MARKUP =
+      """
+                  {{Siehe auch|[[friede]]}}
+                  == Friede ({{Sprache|Deutsch}}) ==
+                  === {{Wortart|Substantiv|Deutsch}}, {{m}} ===
+
+                  {{Deutsch Substantiv Übersicht
+                  |Genus=m
+                  |Nominativ Singular=Friede
+                  |Nominativ Plural=Frieden
+                  |Genitiv Singular=Friedens
+                  |Genitiv Plural=Frieden
+                  |Dativ Singular=Frieden
+                  |Dativ Plural=Frieden
+                  |Akkusativ Singular=Frieden
+                  |Akkusativ Plural=Frieden
+                  }}
+
+                  {{Anmerkung}}
+                  :Das Wort weicht lediglich im Nominativ Singular von ''[[Frieden]]'' ab.
+
+                  {{Nebenformen}}
+                  :[[Frieden]]
+
+                  {{Worttrennung}}
+                  :Frie·de, {{Pl.}} Frie·den
+
+                  {{Aussprache}}
+                  :{{IPA}} {{Lautschrift|ˈfʁiːdə}}
+                  :{{Hörbeispiele}} {{Audio|De-Friede.ogg}}
+                  :{{Reime}} {{Reim|iːdə|Deutsch}}
+
+                  {{Bedeutungen}}
+                  :[1] ''ältere Form zu:'' [[Frieden]]
+
+                  {{Herkunft}}
+                  :[[mittelhochdeutsch]] ''{{Ü|gmh|vride}}'', [[althochdeutsch]] ''{{Ü|goh|fridu}}'', [[germanisch]] *''friþu-'' „Friede“, belegt seit dem 8. Jahrhundert<ref>{{Lit-Kluge: Etymologisches Wörterbuch|A=24}}, Stichwort: „Friede(n)“, Seite 316.</ref>
+
+                  {{Unterbegriffe}}
+                  :[1] [[Landfriede]], [[Seelenfriede]]
+
+                  {{Beispiele}}
+                  :[1] ''Friede'' sei mit euch!
+                  :[1] der ''Friede'' Gottes, der höher ist als alle Vernunft<ref>Die Bibel: Philipper 4,7 Luther-Übersetzung, Revision 1984</ref>
+                  :[1] „''Friede'' den Hütten! Krieg den Palästen!“ <ref>Georg Büchner, Der Hessische Landbote, Erste Botschaft. Darmstadt, im Juli 1834. [[s:Der Hessische Landbote|S. 1]]</ref>
+                  :[1] „Der innere ''Friede'' soll gesichert werden. Wer bestreitet das?“ (Alfred Grosser, Die Bundesrepublik, der internationale und der innere Friede. 1975)  <ref>{{Literatur | Online=zitiert nach {{GBS|BZ-6AAAAIAAJ||Hervorhebung=der+innere+Friede}} | Autor=Alfred Grosser | Titel= Die Bundesrepublik, der internationale und der innere Friede| Verlag=Verlag der Buchhändler-Vereinigung GmbH | Ort= | Jahr=1975 | Seiten=Seite 47 | Band= |  ISBN=9783765705717 }}.</ref>
+                  :[1] „''Friede'' herrschte nur in Europa – wenn man denn den Zustand Frieden nennen mochte, der nach dem Schweigen der Waffen eintrat.“<ref>{{Literatur | Autor=Theo Sommer | Titel=1945 | TitelErg= Die Biographie eines Jahres| Auflage= |Verlag=Rowohlt| Ort=Reinbek | Jahr=2005 | ISBN=3-498-06382-0}}, Seite 95.</ref>
+
+                  {{Redewendungen}}
+                  :[1] [[Friede, Freude, Eierkuchen|''Friede'', Freude, Eierkuchen]]
+
+                  {{Sprichwörter}}
+                  :[1] [[Friede ernährt, Unfriede verzehrt|''Friede'' ernährt, Unfriede verzehrt]]
+
+                  {{Charakteristische Wortkombinationen}}
+                  :[1] der [[inner-|innere]] ''Friede''
+                  :[1] ''[[geschichtlich|Geschichtliche]] [[Ereignis]]se:'' ''Friede'' [[von]] [[Frankfurt]]<ref>{{Wikipedia|Friede von Frankfurt|Friede von Frankfurt}}</ref> / [[Lunéville]]<ref>{{Wikipedia|Friede von Lunéville|Friede von Lunéville}}</ref> / [[Pressburg]]<ref>{{Wikipedia|Friede von Pressburg|Friede von Pressburg}}</ref> / [[Riga]]<ref>{{Per-Deutschlandradio | Online=https://www.deutschlandfunk.de/100-jahre-friede-von-riga-ende-eines-nie-erklaerten-krieges.871.de.html?dram:article_id=494199 | Autor=Bernd Ulrich | Titel=100 Jahre „Friede von Riga“ – Ende eines nie erklärten Krieges | TitelErg= | Tag=18 | Monat=03 | Jahr=2021 | Zugriff=2021-03-18 | Kommentar=Deutschlandfunk / Köln, Sendereihe: Kalenderblatt }}</ref> / [[Teschen]]<ref>{{Wikipedia|Friede von Teschen|Friede von Teschen}}</ref> / [[Utrecht]]<ref>{{Wikipedia|Friede von Utrecht|Friede von Utrecht}}</ref> / der [[westfälisch|Westfälische]] ''Friede''<ref>{{Wikipedia|Westfälischer Friede|Westfälischer Friede}}</ref>
+
+                  {{Wortbildungen}}
+                  :[[frieden]]
+
+                  ==== {{Übersetzungen}} ====
+                  {{Ü-Tabelle|*|G=Übersetzungen umgeleitet|Ü-Liste=
+                  :{{Übersetzungen umleiten|1|Frieden|}}
+                  }}
+
+                  {{Referenzen}}
+                  :[1] {{Ref-DWDS|Friede}}
+                  :[1] {{Ref-Duden|Friede}}
+                  :[*] {{Ref-UniLeipzig|Friede}}
+                  :[1] {{Ref-FreeDictionary|Friede}}
+                  :[1] {{Ref-Grimm|Friede}}
+                  :[1] {{Ref-Goethe|Friede}}
+
+                  {{Quellen}}
+
+                  === {{Wortart|Substantiv|Deutsch}}, {{f}}, {{Wortart|Vorname|Deutsch}} ===
+
+                  {{Deutsch Vorname Übersicht f
+                  |Nominativ Singular=Friede
+                  |Nominativ Plural=Friedes
+                  |Genitiv Singular=Friedes
+                  |Genitiv Plural=Friedes
+                  |Dativ Singular=Friede
+                  |Dativ Plural=Friedes
+                  |Akkusativ Singular=Friede
+                  |Akkusativ Plural=Friedes
+                  }}
+
+                  {{Worttrennung}}
+                  :Frie·de
+
+                  {{Aussprache}}
+                  :{{IPA}} {{Lautschrift|ˈfʁiːdə}}
+                  :{{Hörbeispiele}} {{Audio|De-Friede.ogg}}
+                  :{{Reime}} {{Reim|iːdə|Deutsch}}
+
+                  {{Bedeutungen}}
+                  :[1] [[alt]]er [[nordfriesisch]]er [[weiblich]]er [[Vorname]]
+
+                  {{Herkunft}}
+                  :Ursprung auf den [[Insel]]n [[Amrum]], [[Föhr]] und [[Sylt]] {{QS Herkunft|unbelegt}}
+
+                  {{Namensvarianten}}
+                  :[[Frida]], [[Frieda]]
+
+                  {{Bekannte Namensträger}}
+                  :[1] [[w:Friede Springer|Friede Springer]], [[w:Person|Person]]
+
+                  {{Beispiele}}
+                  :[1] „‚Bitte, gib mir den Brief zurück, Tante ''Friede''!‘, sagte Ellen hastig und griff nach dem Schreiben.“<ref>Hedwig Courths-Mahler - Band 74: ''Friede Sörrensen''. Roman um das Schicksal einer verschmähten Frau. Bastei Lübbe, Köln 2015. ISBN 978-3732503162. ([https://books.google.de/books?id=ntwpBgAAQBAJ&pg=PT77 E-Book] bei Google Books)</ref>
+
+                  ==== {{Übersetzungen}} ====
+                  {{Ü-Tabelle|1|G=alter nordfriesischer weiblicher Vorname|Ü-Liste=
+                  *{{fr}}: {{Ü|fr|}}
+                  *{{it}}: {{Ü|it|}}
+                  }}
+
+                  {{Referenzen}}
+                  :[1] {{Wikipedia|Friede}}
+
+                  {{Quellen}}
+
+                  {{Ähnlichkeiten 1|Anagramme=[[fieder]], [[fiedre]]}}""";
 }
