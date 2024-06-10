@@ -65,6 +65,12 @@ task testParserOnly(type: Test) {
     }
 }
 
+task runFuzzer(type: JavaExec) {
+    description "Run the fuzzer on an archive"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.zuellich.offlinewiktionary.util.FuzzerApp'
+}
+
 tasks.compileJava {
     // For now we are happy without proper logging
     options.errorprone.disable("CatchAndPrintStackTrace")
