@@ -102,6 +102,14 @@ public class TokenAssertions {
     };
   }
 
+  public static Consumer<MarkupToken> skip() {
+    return (MarkupToken token) -> {
+      if (token != SkipToken.of()) {
+        fail("Expected to find SkipToken, but found other.");
+      }
+    };
+  }
+
   public static Consumer<MarkupToken> indent(int level) {
     return (MarkupToken token) -> {
       assertIndent(token, level);

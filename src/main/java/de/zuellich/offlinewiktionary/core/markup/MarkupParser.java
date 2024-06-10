@@ -11,6 +11,7 @@ public class MarkupParser {
   /** Do not consider these characters as part of a word ending link. */
   private static final Set<Integer> WORD_LINK_BOUNDARIES =
       Set.of(
+          Byte.toUnsignedInt(Character.SPACE_SEPARATOR),
           Byte.toUnsignedInt(Character.CONTROL),
           Byte.toUnsignedInt(Character.OTHER_PUNCTUATION),
           Byte.toUnsignedInt(Character.START_PUNCTUATION),
@@ -48,15 +49,17 @@ public class MarkupParser {
 
   public MarkupParser() {
     linkLabelTokenParsers = List.of(this::parseItalicToken, this::parseText);
-    italicContentTokenParsers = List.of(this::parseLink, this::parseText);
+    italicContentTokenParsers = List.of(this::parseVideo, this::parseLink, this::parseText);
     tokenParserPriority =
         List.of(
             this::parseIndent,
             this::parseHeading,
             this::parseItalicToken,
+            this::parseVideo,
             this::parseLink,
             this::parseText);
-    textContentTokenParsers = List.of(this::parseItalicToken, this::parseLink, this::parseText);
+    textContentTokenParsers =
+        List.of(this::parseItalicToken, this::parseVideo, this::parseLink, this::parseText);
   }
 
   /**
@@ -102,8 +105,7 @@ public class MarkupParser {
   }
 
   /**
-   * Check if the previous character matches c. If pointer has not moved yet, then false is
-   * returned.
+   * Check if the current character matches c. If pointer has not moved yet, then false is returned.
    *
    * @param c character to check
    * @return false if character is not matching, or pointer out of bounds.
@@ -234,11 +236,70 @@ public class MarkupParser {
     return value.toString();
   }
 
+  private boolean matchesFileTarget(String target) {
+    return target.startsWith("File:") || target.startsWith(":File:");
+  }
+
+  private Optional<SkipToken> parseVideo() {
+    snapshotPointer();
+    try {
+      consumeInOrder('[', '[');
+      final String name = readTerminatedBy('|', ']');
+      if (!matchesFileTarget(name)) {
+        throw new MatchException("Expected a File link, but name doesn't match", null);
+      }
+
+      // consume until closing delimiters are found
+      int pairs = 1;
+      char previous = '\u0000';
+      while (hasNextChar() && pairs > 0) {
+        char current = nextChar();
+        if (current == '[' && previous == '[') {
+          previous =
+              '\u0000'; // if we don't reset here, then we'll have bugs when encountering [[[[
+          pairs++;
+          continue;
+        }
+
+        if (current == ']'
+            && previous
+                == ']') { // if we don't reset here, then we'll have bugs when encountering ]]]]
+          previous = '\u0000';
+          pairs--;
+          continue;
+        }
+
+        previous = current;
+      }
+
+      if (pairs > 0) {
+        throw new MatchException(
+            "Expected to find closing sequence ']]' but parenthesis seem unbalanced.", null);
+      }
+
+      // Now we need to check if we have a word-ending type of "link" (`[[File:test.png]]s`)
+      readTerminatedByType(WORD_LINK_BOUNDARIES);
+    } catch (MatchException e) {
+      restorePointer();
+      return Optional.empty();
+    }
+
+    eraseSnapshot();
+    return Optional.of(SkipToken.of());
+  }
+
   private Optional<LinkToken> parseLink() {
     snapshotPointer();
     try {
       consumeInOrder('[', '[');
       final String link = readTerminatedBy('|', ']');
+      if (matchesFileTarget(link)) {
+        // We might be able to improve performance by rewinding the pointer and handing control
+        // directly to parseVideo?
+        // Otherwise, we can also pay attention to have the parsers adjacent of each other.
+        return Optional.empty();
+      }
+
       List<MarkupToken> label;
       char next = nextChar();
       if (next == '|') {
@@ -257,9 +318,8 @@ public class MarkupParser {
          * is thrown if there is no next char. We could think about working with \u0000 here, but that
          * might get tricky in some circumstances.
          */
-        if (hasNextChar() && !WORD_LINK_BOUNDARIES.contains(Character.getType(peekNextChar()))) {
-          //          String wordEnding = readTerminatedByType( WORD_LINK_BOUNDARIES);
-          String wordEnding = readTerminatedByType(WORD_LINK_BOUNDARIES);
+        String wordEnding = readTerminatedByType(WORD_LINK_BOUNDARIES);
+        if (!wordEnding.isEmpty()) {
           labelText = labelText + wordEnding;
         }
         label = List.of(new TextToken(labelText));
