@@ -114,10 +114,7 @@ public class FuzzerApp {
     }
   }
 
-  /**
-   * Primitive implementation to split a collection into similarly sized sub collections. Returns an
-   * ArrayList to simplify testing.
-   */
+  /** Primitive implementation to split a collection into similarly sized sub collections. */
   public static <E> List<ArrayDeque<E>> bucketize(Collection<E> entries, int buckets) {
     var result = new ArrayList<ArrayDeque<E>>(buckets);
     final int desiredBucketSize = Math.floorDiv(entries.size(), buckets);
