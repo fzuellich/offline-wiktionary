@@ -5,9 +5,15 @@ import java.util.function.Supplier;
 
 /** See https://www.mediawiki.org/wiki/Help:Formatting */
 public class MarkupParser {
+  /**
+   * Mixing bold and italic can lead to situations where we fail to parse the content of the tokens
+   * correctly and would never return a result. Using the level below we can implement an eager
+   * parsing, where we rather close an existing token than start a new one.
+   */
+  private int boldItalicLevel = 0;
+
   // Ideally this would live in a configuration object based on locale, so it could mimic the logic
-  // used by Wiki
-  // even closer.
+  // used by Wiki even closer.
   /** Do not consider these characters as part of a word ending link. */
   private static final Set<Integer> WORD_LINK_BOUNDARIES =
       Set.of(
@@ -32,6 +38,7 @@ public class MarkupParser {
 
   private final List<Supplier<Optional<? extends MarkupToken>>> linkLabelTokenParsers;
   private final List<Supplier<Optional<? extends MarkupToken>>> italicContentTokenParsers;
+  private final List<Supplier<Optional<? extends MarkupToken>>> boldContentTokenParsers;
   private final List<Supplier<Optional<? extends MarkupToken>>> textContentTokenParsers;
   private final List<Supplier<Optional<? extends MarkupToken>>> tokenParserPriority;
 
@@ -48,18 +55,27 @@ public class MarkupParser {
   }
 
   public MarkupParser() {
-    linkLabelTokenParsers = List.of(this::parseItalicToken, this::parseText);
-    italicContentTokenParsers = List.of(this::parseVideo, this::parseLink, this::parseText);
+    linkLabelTokenParsers = List.of(this::parseBoldToken, this::parseItalicToken, this::parseText);
+    italicContentTokenParsers =
+        List.of(this::parseBoldToken, this::parseVideo, this::parseLink, this::parseText);
+    boldContentTokenParsers =
+        List.of(this::parseItalicToken, this::parseVideo, this::parseLink, this::parseText);
     tokenParserPriority =
         List.of(
             this::parseIndent,
             this::parseHeading,
+            this::parseBoldToken,
             this::parseItalicToken,
             this::parseVideo,
             this::parseLink,
             this::parseText);
     textContentTokenParsers =
-        List.of(this::parseItalicToken, this::parseVideo, this::parseLink, this::parseText);
+        List.of(
+            this::parseBoldToken,
+            this::parseItalicToken,
+            this::parseVideo,
+            this::parseLink,
+            this::parseText);
   }
 
   /**
@@ -377,12 +393,49 @@ public class MarkupParser {
     return Optional.empty();
   }
 
+  private void assertHasAtLeastThreeChars(String message) {
+    boolean hasAtLeastNCharacters = pointer < this.input.length - 3;
+    if (!hasAtLeastNCharacters) {
+      throw new MatchException(message, null);
+    }
+  }
+
+  private Optional<BoldToken> parseBoldToken() {
+    snapshotPointer();
+    boldItalicLevel++;
+    try {
+      // If we don't check here, it's possible we see an exception when mixing bold and italics
+      assertHasAtLeastThreeChars("Not enough characters to match beginning sequence for bold");
+      consumeInOrder('\'', '\'', '\'');
+      List<MarkupToken> value = collectTokens(boldContentTokenParsers);
+      if (value.isEmpty()) {
+        throw new MatchException("Found no content for bold block", null);
+      }
+
+      // if we don't throw an exception here, then we can't mix bold and italics, because sometimes
+      // the markup will start with italics (e.g. '' '''bold''' other ''), and sometimes it will
+      // start with bold ''' ''italic'' other''' which will cause consume in order to break
+      assertHasAtLeastThreeChars("No more characters to find closing sequence for bold");
+      consumeInOrder('\'', '\'', '\'');
+      eraseSnapshot();
+      boldItalicLevel--;
+      return Optional.of(new BoldToken(value));
+    } catch (MatchException e) {
+      restorePointer();
+      boldItalicLevel--;
+      return Optional.empty();
+    }
+  }
+
   private Optional<ItalicToken> parseItalicToken() {
     snapshotPointer();
+    boldItalicLevel++;
     try {
       consumeInOrder('\'', '\'');
+      if (peekNextChar() == '\'' && boldItalicLevel > 1) {
+        throw new MatchException("Looks like there is another bold move...", null);
+      }
       List<MarkupToken> value = collectTokens(italicContentTokenParsers);
-      ;
       if (value.isEmpty()) {
         /*
          * We don't support empty italics (i.e. ''''), instead we probably encountered the closing sequence for italics
@@ -401,9 +454,11 @@ public class MarkupParser {
         throw new MatchException("No more characters to find closing sequence for italics", null);
       }
       consumeInOrder('\'', '\'');
+      boldItalicLevel--;
       eraseSnapshot();
       return Optional.of(new ItalicToken(value));
     } catch (MatchException e) {
+      boldItalicLevel--;
       restorePointer();
       return Optional.empty();
     }

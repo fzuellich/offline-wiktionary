@@ -9,6 +9,7 @@ public interface MarkupToken {
       switch (token.getType()) {
         case TEXT -> result.append(((TextToken) token).value());
         case ITALIC -> result.append(toPlainText(((ItalicToken) token).value()));
+        case BOLD -> result.append(toPlainText(((BoldToken) token).value()));
         case HEADING -> result.append(toPlainText(((HeadingToken) token).value()));
         case LINK -> result.append(toPlainText(((LinkToken) token).labelValue()));
         case INDENT -> result.append("\t".repeat(Math.min(((IndentToken) token).level(), 10)));
