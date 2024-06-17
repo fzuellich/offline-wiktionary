@@ -1,20 +1,20 @@
 package de.zuellich.offlinewiktionary.util;
 
 import de.zuellich.offlinewiktionary.core.archive.PageIndexParser;
+import de.zuellich.offlinewiktionary.core.archive.PageIndexWriter;
 import de.zuellich.offlinewiktionary.core.archive.SeekEntry;
 import de.zuellich.offlinewiktionary.core.archive.WiktionaryReader;
 import de.zuellich.offlinewiktionary.core.markup.MarkupParser;
 import de.zuellich.offlinewiktionary.core.resolution.AdjacentResolutionStrategy;
 import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 public class FuzzerApp {
 
@@ -55,14 +55,19 @@ public class FuzzerApp {
     }
   }
 
-  private FuzzerApp(Path index) {
+  private FuzzerApp(Path index, @Nullable Path archivePath) {
     this.index = index;
-    AdjacentResolutionStrategy resolutionStrategy = new AdjacentResolutionStrategy(index);
-    this.archive = resolutionStrategy.resolve().archive();
+    if (archivePath == null) {
+      AdjacentResolutionStrategy resolutionStrategy = new AdjacentResolutionStrategy(index);
+      this.archive = resolutionStrategy.resolve().archive();
+    } else {
+      this.archive = archivePath;
+    }
   }
 
   public void run() throws IOException, InterruptedException {
-    System.out.println("Reading index file...");
+    System.out.printf("Using archive file '%s'...%n", archive);
+    System.out.printf("Reading index file '%s'...%n", index);
     Collection<SeekEntry> entries = readIndex();
     System.out.printf("Splitting into %d buckets...%n", NO_OF_BUCKETS);
     Collection<ArrayDeque<SeekEntry>> buckets = bucketize(entries, NO_OF_BUCKETS);
@@ -74,8 +79,8 @@ public class FuzzerApp {
     }
 
     final Collection<SeekEntry> allErrors = new ArrayList<>();
-    final List<Future<Collection<SeekEntry>>> futures = pool.invokeAll(result);
     System.out.println("Waiting for computation...");
+    final List<Future<Collection<SeekEntry>>> futures = pool.invokeAll(result);
     for (Future<Collection<SeekEntry>> task : futures) {
       final Collection<SeekEntry> seekEntries = task.resultNow();
       allErrors.addAll(seekEntries);
@@ -83,7 +88,7 @@ public class FuzzerApp {
 
     pool.shutdown();
     System.out.printf("Number of entries that couldn't be parsed: %d%n", allErrors.size());
-    writeErrors(allErrors, Path.of("./test-output.txt"));
+    PageIndexWriter.write(allErrors, Path.of("./test-output.txt.bz2"));
   }
 
   /** Take an index file and read all entries */
@@ -103,28 +108,21 @@ public class FuzzerApp {
             .collect(Collectors.toSet());
   }
 
-  /** Write a list of Seek entries to the given path. */
-  private void writeErrors(Collection<SeekEntry> entries, Path output) {
-    try (BufferedWriter writer = Files.newBufferedWriter(output, StandardOpenOption.CREATE)) {
-      for (SeekEntry e : entries) {
-        writer.write(String.format("%d;%d;%s%n", e.bytesToSeek(), e.articleId(), e.title()));
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
   /** Primitive implementation to split a collection into similarly sized sub collections. */
-  public static <E> List<ArrayDeque<E>> bucketize(Collection<E> entries, int buckets) {
-    var result = new ArrayList<ArrayDeque<E>>(buckets);
-    final int desiredBucketSize = Math.floorDiv(entries.size(), buckets);
+  public static <E> List<ArrayDeque<E>> bucketize(final Collection<E> entries, final int buckets) {
+    // if we have fewer entries than buckets, we'll return no buckets. Math.min ensures we always
+    // return at least the
+    // amount of buckets possible if more was requested.
+    final int amountOfBuckets = Math.min(entries.size(), buckets);
+    var result = new ArrayList<ArrayDeque<E>>(amountOfBuckets);
+    int desiredBucketSize = Math.floorDiv(entries.size(), amountOfBuckets);
 
     ArrayDeque<E> bucket = new ArrayDeque<>(desiredBucketSize);
     for (E entry : entries) {
       bucket.add(entry);
       if (bucket.size() == desiredBucketSize) {
         result.add(bucket);
-        if (result.size() < buckets) {
+        if (result.size() < amountOfBuckets) {
           bucket = new ArrayDeque<>(desiredBucketSize);
         }
       }
@@ -135,8 +133,12 @@ public class FuzzerApp {
 
   public static void main(String[] args) throws Exception {
     Path index = Path.of(args[0]);
+    Path archive = null;
+    if (args.length > 1) {
+      archive = Path.of(args[1]);
+    }
 
-    final FuzzerApp fuzzerApp = new FuzzerApp(index);
+    final FuzzerApp fuzzerApp = new FuzzerApp(index, archive);
     fuzzerApp.run();
   }
 }

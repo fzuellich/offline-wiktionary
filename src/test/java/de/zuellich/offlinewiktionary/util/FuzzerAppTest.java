@@ -25,5 +25,11 @@ class FuzzerAppTest {
     assertEquals(1, buckets.get(0).size());
     assertEquals(1, buckets.get(1).size());
     assertEquals(3, buckets.get(2).size());
+
+    buckets = FuzzerApp.bucketize(List.of(1), 10);
+    assertEquals(1, buckets.size());
+
+    buckets = FuzzerApp.bucketize(List.of(1, 2), 10);
+    assertEquals(2, buckets.size());
   }
 }
