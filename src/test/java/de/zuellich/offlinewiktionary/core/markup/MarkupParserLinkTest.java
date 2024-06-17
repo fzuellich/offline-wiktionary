@@ -78,4 +78,15 @@ public class MarkupParserLinkTest {
             List.of(
                 text("Italic "), link("Link", List.of(text("more "), italic(text("italics")))))));
   }
+
+  /**
+   * Previously we assumed that word ending links are terminated by a space. That doesn't hold up in
+   * reality, and it will break the parser if e.g. we are using the link in italics (because the
+   * italics token will never terminate as we consume the closing characters).
+   */
+  @Test
+  public void regressionParseWordEndingsInItalics() {
+    final List<MarkupToken> result = MarkupParser.parseString("''[[Link]]s''");
+    assertTokensStrict(result, italic(link("Link", text("Links"))));
+  }
 }
