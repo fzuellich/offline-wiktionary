@@ -1,5 +1,23 @@
 Offline Wiktionary is an experiment to make MediaWiki exports available for offline reading.
 
+## Usage
+
+### JavaFX Application
+
+Run `./gradlew run` to start the regular JavaFX based application.
+
+### Fuzzer
+
+To run the Fuzzer call `./gradlew runFuzzer --args 'pathToIndex
+[pathToArchive]'`.
+
+The Fuzzer is a small application that tries to parse all entries found in an
+index file from a given archive. Entries that can't be parsed are written to
+`./test-output.txt.bz2` in the format of an index file. Thus allowing you to
+only parse failed entries for subsequent invocations.
+
+Archive and index are expected to be compressed using BZIP2.
+
 ## Implementation details
 
 ### MediaWiki Grammar
