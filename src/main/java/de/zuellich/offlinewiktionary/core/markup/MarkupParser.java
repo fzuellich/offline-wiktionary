@@ -8,7 +8,7 @@ public class MarkupParser {
   /**
    * Mixing bold and italic can lead to situations where we fail to parse the content of the tokens
    * correctly and would never return a result. Using the variable below we can implement a lazy
-   * parsing, where we rather close an existing token than start a new one.
+   * approach, where we rather close an existing token than start a new one.
    */
   private int boldItalicLevel = 0;
 
