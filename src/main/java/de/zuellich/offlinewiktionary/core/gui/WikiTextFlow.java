@@ -5,10 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
+import javafx.scene.text.*;
 
 /** Use JavaFX {@link javafx.scene.text.TextFlow} to display markdown. */
 public class WikiTextFlow extends TextFlow {
@@ -18,6 +15,7 @@ public class WikiTextFlow extends TextFlow {
 
   private final LinkClickHandler linkClickHandler;
   private boolean italicsEnabled = false;
+  private boolean boldEnabled = false;
   private int fontSize = DEFAULT_FONT_SIZE;
 
   public WikiTextFlow(LinkClickHandler linkClickHandler) {
@@ -38,6 +36,7 @@ public class WikiTextFlow extends TextFlow {
         case LINK -> result.add(linkNode((LinkToken) token));
         case HEADING -> result.addAll(headingNode((HeadingToken) token));
         case INDENT -> result.add(indentNode((IndentToken) token));
+        case BOLD -> result.addAll(boldNode((BoldToken) token));
         case ITALIC -> result.addAll(italicNode((ItalicToken) token));
         case TEXT -> result.add(textNode((TextToken) token));
         case NULL -> {
@@ -52,11 +51,26 @@ public class WikiTextFlow extends TextFlow {
   }
 
   private Font getFont() {
-    if (!italicsEnabled) {
+    if (!italicsEnabled && !boldEnabled) {
       return Font.font("System", fontSize);
     }
 
-    return Font.font("System", FontPosture.ITALIC, fontSize);
+    if (italicsEnabled && boldEnabled) {
+      return Font.font("System", FontWeight.BOLD, FontPosture.ITALIC, fontSize);
+    }
+
+    if (italicsEnabled) {
+      return Font.font("System", FontPosture.ITALIC, fontSize);
+    }
+
+    return Font.font("System", FontWeight.BOLD, fontSize);
+  }
+
+  private Collection<Node> boldNode(BoldToken token) {
+    boldEnabled = true;
+    final Collection<Node> nodes = tokensToChildren(token.value());
+    boldEnabled = false;
+    return nodes;
   }
 
   private Collection<Node> italicNode(ItalicToken token) {

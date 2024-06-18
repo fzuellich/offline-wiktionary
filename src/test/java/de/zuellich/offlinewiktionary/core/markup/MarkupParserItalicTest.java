@@ -45,4 +45,11 @@ public class MarkupParserItalicTest {
             italic(text("more")),
             text(" italics.")));
   }
+
+  @Test
+  public void canCombineWithBold() {
+    // NOTE: this test emphasis italics wrapping bold, there are separate tests just for bold
+    final List<MarkupToken> tokens = MarkupParser.parseString("'''''H'''ere comes bold''");
+    assertTokensStrict(tokens, italic(List.of(bold(text("H")), text("ere comes bold"))));
+  }
 }

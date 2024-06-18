@@ -73,6 +73,18 @@ public class TokenAssertions {
     assertTokensStrict(List.of(token), List.of(matcher));
   }
 
+  public static Consumer<MarkupToken> bold(List<Consumer<MarkupToken>> expectedValue) {
+    return (MarkupToken token) -> {
+      assertMatchingType(MarkupTokenType.BOLD, token);
+      List<MarkupToken> value = ((BoldToken) token).value();
+      assertTokensStrict(value, expectedValue);
+    };
+  }
+
+  public static Consumer<MarkupToken> bold(Consumer<MarkupToken> expectedValue) {
+    return bold(List.of(expectedValue));
+  }
+
   public static Consumer<MarkupToken> text(String text) {
     return (MarkupToken token) -> {
       assertText(token, text);
