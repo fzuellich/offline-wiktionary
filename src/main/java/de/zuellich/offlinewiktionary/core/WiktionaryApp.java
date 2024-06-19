@@ -9,6 +9,8 @@ import de.zuellich.offlinewiktionary.core.wiki.WikiPage;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,6 +23,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class WiktionaryApp extends Application {
+  // public for testing
+  public static final Pattern URL_MATCHER = Pattern.compile(".+/([-\\w._]+)$");
 
   private final WiktionaryModel model = new WiktionaryModel(new WiktionaryReader(null));
   private final TextField search;
@@ -102,17 +106,42 @@ public class WiktionaryApp extends Application {
     return result;
   }
 
+  private String rewriteSearch(String search) {
+    if (search.startsWith("https://")) {
+      final Matcher matcher = URL_MATCHER.matcher(search);
+      if (matcher.matches()) {
+        String penultimate = matcher.group(1);
+        return penultimate.replace('_', ' '); // rewrite things like 'a_sentence' to 'a sentence'
+      }
+    }
+    return search;
+  }
+
   private Pane getSearchBar() {
     Button back = new Button("Back");
     back.disableProperty().bind(linkClickHandler.isHistoryEmptyProperty());
     back.setOnAction(value -> linkClickHandler.historyBack());
 
     search.disableProperty().bind(model.isReadyProperty().not());
-    search.setOnAction(value -> linkClickHandler.handle(search.getText()));
+    search.setOnAction(
+        value -> {
+          String rewritten = rewriteSearch(search.getText());
+          if (!rewritten.equals(search.getText())) {
+            search.setText(rewritten);
+          }
+          linkClickHandler.handle(search.getText());
+        });
 
     Button fireSearch = new Button("Search");
     fireSearch.disableProperty().bind(model.isReadyProperty().not());
-    fireSearch.setOnAction(value -> linkClickHandler.handle(search.getText()));
+    fireSearch.setOnAction(
+        value -> {
+          String rewritten = rewriteSearch(search.getText());
+          if (!rewritten.equals(search.getText())) {
+            search.setText(rewritten);
+          }
+          linkClickHandler.handle(search.getText());
+        });
 
     HBox result = new HBox(5, back, search, fireSearch);
     HBox.setHgrow(search, Priority.ALWAYS);
